@@ -1,0 +1,6 @@
+{
+	"title"		: "Extended Spawnmenu",
+	"type"		: "tool",
+	"tags"		: [ "build", "scenic" ],
+	"ignore"	: []
+}
