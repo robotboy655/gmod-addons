@@ -3,8 +3,7 @@
 echo.
 
 set p=%1
-set id=%p:~-10%
-set id=%id:~0,-1%
+set id=%p:~-9%
 
 echo WORKSHOP ID IS %id%
 
