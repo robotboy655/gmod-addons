@@ -5,139 +5,167 @@ TOOL.Name = "#tool.rb655_easy_bonemerge.name"
 TOOL.ClientConVar[ "noglow" ] = "0"
 
 if ( SERVER ) then
-	util.AddNetworkString( "rb655_bm_undo" )
-end
 
-local function ReplaceEntity( oldent )
+	-- Replaces the bonemerged entity with a custom one for easier everything for the tool
+	local function ReplaceEntity( oldent )
+		local newEntity = ents.Create( "ent_bonemerged" )
+		newEntity:SetModel( oldent:GetModel() )
+		newEntity:SetSkin( oldent:GetSkin() || 0 )
+		if ( oldent:GetFlexScale() != newEntity:GetFlexScale() ) then newEntity:SetFlexScale( oldent:GetFlexScale() ) end -- Don't create unnecessary entities
+		if ( oldent:GetNumBodyGroups() ) then
+			for id = 0, oldent:GetNumBodyGroups() - 1 do newEntity:SetBodygroup( id, oldent:GetBodygroup( id ) ) end
+		end
+		for i = 0, oldent:GetFlexNum() - 1 do newEntity:SetFlexWeight( i, oldent:GetFlexWeight( i ) ) end
+		for i = 0, oldent:GetBoneCount() do
+			if ( oldent:GetManipulateBoneScale( i ) != newEntity:GetManipulateBoneScale( i ) ) then newEntity:ManipulateBoneScale( i, oldent:GetManipulateBoneScale( i ) ) end
+			if ( oldent:GetManipulateBoneAngles( i ) != newEntity:GetManipulateBoneAngles( i ) ) then newEntity:ManipulateBoneAngles( i, oldent:GetManipulateBoneAngles( i ) ) end
+			if ( oldent:GetManipulateBonePosition( i ) != newEntity:GetManipulateBonePosition( i ) ) then newEntity:ManipulateBonePosition( i, oldent:GetManipulateBonePosition( i ) ) end
+			if ( oldent:GetManipulateBoneJiggle( i ) != newEntity:GetManipulateBoneJiggle( i ) ) then newEntity:ManipulateBoneJiggle( i, oldent:GetManipulateBoneJiggle( i ) ) end
+		end
 
-	local newEntity = ents.Create( "ent_bonemerged" )
-	newEntity:SetModel( oldent:GetModel() )
-	newEntity:SetSkin( oldent:GetSkin() || 0 )
-	newEntity:SetFlexScale( oldent:GetFlexScale() )
-	if ( oldent:GetNumBodyGroups() ) then
-		for id = 0, oldent:GetNumBodyGroups() - 1 do newEntity:SetBodygroup( id, oldent:GetBodygroup( id ) ) end
+		newEntity:Spawn()
+
+		newEntity.EntityMods = oldent.EntityMods
+		newEntity.BoneMods = oldent.BoneMods
+
+		duplicator.ApplyEntityModifiers( nil, newEntity )
+		duplicator.ApplyBoneModifiers( nil, newEntity )
+
+		return newEntity
 	end
-	for i = 0, oldent:GetFlexNum() - 1 do newEntity:SetFlexWeight( i, oldent:GetFlexWeight( i ) ) end
-	for i = 0, oldent:GetBoneCount() do
-		newEntity:ManipulateBoneScale( i, oldent:GetManipulateBoneScale( i ) )
-		newEntity:ManipulateBoneAngles( i, oldent:GetManipulateBoneAngles( i ) )
-		newEntity:ManipulateBonePosition( i, oldent:GetManipulateBonePosition( i ) )
-		newEntity:ManipulateBoneJiggle( i, oldent:GetManipulateBoneJiggle( i ) ) -- Even though we don't know what this does, I am still putting this here.
+
+	-- Adds any constrained entities to the bonemerge
+	function rb655_CheckForWelds( ent, parent )
+		if ( !constraint.HasConstraints( ent ) ) then return end
+
+		for _, v in pairs( constraint.GetAllConstrainedEntities( ent ) ) do
+			if ( v == ent ) then continue end
+			if ( constraint.FindConstraint( v, "EasyBonemergeParent" ) ) then continue end
+
+			local oldent = v
+			if ( IsValid( v ) && v:GetClass() == "prop_effect" ) then oldent = v.AttachedEntity end
+
+			local newEntity = ReplaceEntity( oldent )
+
+			newEntity.LocalPos = ent:WorldToLocal( v:GetPos() )
+			newEntity.LocalAng = ent:WorldToLocalAngles( v:GetAngles() )
+
+			constraint_EasyBonemergeParent( parent, newEntity )
+
+			v:Remove()
+		end
 	end
 
-	newEntity:Spawn()
+	-- Allows for bonemerging depth
+	function rb655_CheckForBonemerges( oldent, newent )
+		for id, ent in pairs( ents.GetAll() ) do
+			if ( ent:GetParent() == oldent && ent:GetClass() == "ent_bonemerged" && !ent.LocalPos ) then
+				rb655_ApplyBonemerge( ent, newent )
+			end
+		end
+	end
 
-	newEntity.EntityMods = oldent.EntityMods
-	newEntity.BoneMods = oldent.BoneMods
-
-	duplicator.ApplyEntityModifiers( nil, newEntity )
-	duplicator.ApplyBoneModifiers( nil, newEntity )
-
-	return newEntity
-
-end
-
-function rb655_CheckForWelds( ent, parent )
-	if ( !constraint.HasConstraints( ent ) ) then return end
-
-	for _, v in pairs( constraint.GetAllConstrainedEntities( ent ) ) do
-		if ( v == ent ) then continue end
-		if ( constraint.FindConstraint( v, "EasyBonemergeParent" ) ) then continue end
-
-		local oldent = v
-		if ( IsValid( v ) && v:GetClass() == "prop_effect" ) then oldent = v.AttachedEntity end
+	-- Entry point
+	function rb655_ApplyBonemerge( ent, selectedEnt )
+		local oldent = ent
+		if ( IsValid( ent ) && ent:GetClass() == "prop_effect" ) then oldent = ent.AttachedEntity end
 
 		local newEntity = ReplaceEntity( oldent )
 
-		newEntity.LocalPos = ent:WorldToLocal( v:GetPos() )
-		newEntity.LocalAng = ent:WorldToLocalAngles( v:GetAngles() )
+		constraint_EasyBonemerge( selectedEnt, newEntity )
+		rb655_CheckForBonemerges( oldent, newEntity )
+		rb655_CheckForWelds( oldent, newEntity )
 
-		constraint_EasyBonemergeParent( parent, newEntity )
+		ent:Remove()
 
-		v:Remove()
+		return newEntity
 	end
-end
 
-function rb655_CheckForBonemerges( oldent, newent )
-	for id, ent in pairs( ents.GetAll() ) do
-		if ( ent:GetParent() == oldent && ent:GetClass() == "ent_bonemerged" && !ent.LocalPos ) then
-			rb655_ApplyBonemerge( ent, newent )
-		end
+	function constraint_EasyBonemerge( Ent1, Ent2, EntityMods, BoneMods )
+		if ( !IsValid( Ent1 ) ) then MsgN( "Easy Bonemerge Tool: Your dupe/save is missing the target entity, cannot apply bonemerged props!" ) return end
+		if ( !IsValid( Ent2 ) ) then MsgN( "Easy Bonemerge Tool: Your dupe/save is missing the bonemerged prop, cannot restore bonemerged prop!" ) return end
+
+		Ent2:SetParent( Ent1, 0 )
+
+		-- I don't remember why I put these here
+		Ent2:SetMoveType( MOVETYPE_NONE )
+		Ent2:SetLocalPos( Vector( 0, 0, 0 ) )
+		Ent2:SetLocalAngles( Angle( 0, 0, 0 ) )
+
+		Ent2:AddEffects( EF_BONEMERGE )
+		--Ent2:Fire( "SetParentAttachment", Ent1:GetAttachments()[1].name )
+
+		constraint.AddConstraintTable( Ent1, Ent2, Ent2 )
+
+		Ent2:SetTable( {
+			Type = "EasyBonemerge",
+			Ent1 = Ent1,
+			Ent2 = Ent2,
+			EntityMods = EntityMods || Ent2.EntityMods,
+			BoneMods = BoneMods || Ent2.BoneMods
+		} )
+
+		duplicator.ApplyEntityModifiers( nil, Ent2 )
+		duplicator.ApplyBoneModifiers( nil, Ent2 )
+
+		Ent1:DeleteOnRemove( Ent2 )
+
+		rb655_CheckForBonemerges( Ent2, Ent2 )
+
+		return Ent2
 	end
-end
+	duplicator.RegisterConstraint( "EasyBonemerge", constraint_EasyBonemerge, "Ent1", "Ent2", "EntityMods", "BoneMods" )
 
-function rb655_ApplyBonemerge( ent, newent )
-	if ( CLIENT ) then return end
+	function constraint_EasyBonemergeParent( Ent1, Ent2, LocalPos, LocalAng, EntityMods, BoneMods )
+		if ( !IsValid( Ent1 ) ) then MsgN( "Easy Bonemerge Tool: Your dupe/save is missing parent target entity, cannot apply bonemerged props!" ) return end
+		if ( !IsValid( Ent2 ) ) then MsgN( "Easy Bonemerge Tool: Your dupe/save is missing parent bonemerged prop, cannot restore bonemerged prop!" ) return end
 
-	local oldent = ent
-	if ( IsValid( ent ) && ent:GetClass() == "prop_effect" ) then oldent = ent.AttachedEntity end
+		Ent2:SetParent( Ent1, 0 )
+		Ent2.BoneMergeParent = true
 
-	local newEntity = ReplaceEntity( oldent )
+		Ent2:SetLocalPos( LocalPos || Ent2.LocalPos )
+		Ent2:SetLocalAngles( LocalAng || Ent2.LocalAng )
 
-	constraint_EasyBonemerge( newent, newEntity )
-	rb655_CheckForBonemerges( oldent, newEntity )
-	rb655_CheckForWelds( oldent, newEntity )
+		constraint.AddConstraintTable( Ent1, Ent2, Ent2 )
 
-	ent:Remove()
+		Ent2:SetTable( {
+			Type = "EasyBonemergeParent",
+			Ent1 = Ent1,
+			Ent2 = Ent2,
+			LocalPos = LocalPos || Ent2.LocalPos,
+			LocalAng = LocalAng || Ent2.LocalAng,
+			EntityMods = EntityMods || Ent2.EntityMods,
+			BoneMods = BoneMods || Ent2.BoneMods
+		} )
 
-	return newEntity
-end
+		duplicator.ApplyEntityModifiers( nil, Ent2 )
+		duplicator.ApplyBoneModifiers( nil, Ent2 )
 
-function constraint_EasyBonemerge( Ent1, Ent2, EntityMods )
+		Ent1:DeleteOnRemove( Ent2 )
 
-	Ent2:SetParent( Ent1, 0 )
-	Ent2:AddEffects( EF_BONEMERGE )
-	--Ent2:Fire( "SetParentAttachment", Ent1:GetAttachments()[1].name )
+		return Ent2
+	end
+	duplicator.RegisterConstraint( "EasyBonemergeParent", constraint_EasyBonemergeParent, "Ent1", "Ent2", "LocalPos", "LocalAng", "EntityMods", "BoneMods" )
 
-	constraint.AddConstraintTable( Ent1, Ent2, Ent2 )
+	-- Undo bonemerges from UI
+	util.AddNetworkString( "rb655_bm_undo" )
+	net.Receive( "rb655_bm_undo", function( len, ply )
+		local ent = net.ReadEntity()
+		if ( !IsValid( ent ) || ent:GetClass() != "ent_bonemerged" ) then return end
 
-	Ent2:SetTable( {
-		Type = "EasyBonemerge",
-		Ent1 = Ent1,
-		Ent2 = Ent2,
-		EntityMods = EntityMods || Ent2.EntityMods
-	} )
+		local parent = ent:GetParent()
+		if ( !IsValid( parent ) ) then return end
 
-	duplicator.ApplyEntityModifiers( nil, Ent2 )
-	duplicator.ApplyBoneModifiers( nil, Ent2 )
+		local tool = ply:GetTool( "rb655_easy_bonemerge" )
+		if ( !istable( tool ) ) then return end
 
-	Ent1:DeleteOnRemove( Ent2 )
+		if ( tool:GetSelectedEntity() != parent ) then return end
 
-	rb655_CheckForBonemerges( Ent2, Ent2 )
-
-	return Ent2
-
-end
-duplicator.RegisterConstraint( "EasyBonemerge", constraint_EasyBonemerge, "Ent1", "Ent2", "EntityMods" )
-
-function constraint_EasyBonemergeParent( Ent1, Ent2, LocalPos, LocalAng, EntityMods )
-
-	Ent2:SetParent( Ent1, 0 )
-	Ent2.BoneMergeParent = true
-
-	Ent2:SetLocalPos( LocalPos || Ent2.LocalPos )
-	Ent2:SetLocalAngles( LocalAng || Ent2.LocalAng )
-
-	constraint.AddConstraintTable( Ent1, Ent2, Ent2 )
-
-	Ent2:SetTable( {
-		Type = "EasyBonemergeParent",
-		Ent1 = Ent1,
-		Ent2 = Ent2,
-		LocalPos = LocalPos || Ent2.LocalPos,
-		LocalAng = LocalAng || Ent2.LocalAng,
-		EntityMods = EntityMods || Ent2.EntityMods
-	} )
-
-	duplicator.ApplyEntityModifiers( nil, Ent2 )
-	duplicator.ApplyBoneModifiers( nil, Ent2 )
-
-	Ent1:DeleteOnRemove( Ent2 )
-
-	return Ent2
+		ply:SendLua( "hook.Run( 'OnUndo', 'Bonemerge' )" )
+		ent:Remove()
+	end )
 
 end
-duplicator.RegisterConstraint( "EasyBonemergeParent", constraint_EasyBonemergeParent, "Ent1", "Ent2", "LocalPos", "LocalAng", "EntityMods" )
 
 function TOOL:GetSelectedEntity()
 	return self:GetWeapon():GetNWEntity( "rb655_bonemerge_entity" )
@@ -182,7 +210,7 @@ end
 function TOOL:Reload( tr )
 	local ent = !self:GetOwner():KeyDown( IN_USE ) && tr.Entity || self:GetOwner()
 	if ( !IsValid( ent ) ) then return false end
-	if ( SERVER /*&& ( constraint.HasConstraints( ent, "EasyBonemerge" ) || constraint.HasConstraints( ent, "EasyBonemergeParent" ) )*/ ) then
+	if ( SERVER --[[&& ( constraint.HasConstraints( ent, "EasyBonemerge" ) || constraint.HasConstraints( ent, "EasyBonemergeParent" ) )]] ) then
 		constraint.RemoveConstraints( ent, "EasyBonemerge" )
 		constraint.RemoveConstraints( ent, "EasyBonemergeParent" )
 	end
@@ -261,12 +289,14 @@ function TOOL:UpdateGhostEntity( ent, ply, tr )
 	ent:SetMaterial( trEnt:GetMaterial() )
 	ent:SetSkin( trEnt:GetSkin() || 0 )
 	ent:SetModel( trEnt:GetModel() )
-	ent:SetParent( self:GetSelectedEntity() )
+	ent:SetParent( self:GetSelectedEntity(), 0 )
 	ent:AddEffects( EF_BONEMERGE )
 	ent:SetNoDraw( false )
 end
 
 function TOOL:Think()
+	if ( !IsValid( self:GetSelectedEntity() ) ) then self:ReleaseGhostEntity() return end
+
 	local tr = util.TraceLine( {
 		start = self:GetOwner():GetShootPos(),
 		endpos = self:GetOwner():GetShootPos() + self:GetOwner():GetAimVector() * 16000,
@@ -274,9 +304,7 @@ function TOOL:Think()
 		mask = MASK_ALL,
 	} )
 
-	local ent = self:GetSelectedEntity()
-
-	if ( !IsValid( tr.Entity ) || !IsValid( ent ) || tr.Entity:IsPlayer() || tr.Entity:GetModel():StartWith( "*" ) ) then
+	if ( !IsValid( tr.Entity ) || tr.Entity == self:GetSelectedEntity() || tr.Entity:IsPlayer() || tr.Entity:GetModel():StartWith( "*" ) ) then
 		self:ReleaseGhostEntity()
 		return
 	end
@@ -287,24 +315,6 @@ function TOOL:Think()
 
 	self:UpdateGhostEntity( self.GhostEntity, self:GetOwner(), tr )
 end
-
-net.Receive( "rb655_bm_undo", function( len, ply )
-
-	local ent = net.ReadEntity()
-	if ( !IsValid( ent ) || ent:GetClass() != "ent_bonemerged" ) then return end
-
-	local parent = ent:GetParent()
-	if ( !IsValid( parent ) ) then return end
-
-	local tool = ply:GetTool( "rb655_easy_bonemerge" )
-	if ( !istable( tool ) ) then return end
-
-	if ( tool:GetSelectedEntity() != parent ) then return end
-
-	ply:SendLua( "hook.Run( 'OnUndo', 'Bonemerge' )" )
-	ent:Remove()
-
-end )
 
 if ( SERVER ) then return end
 
@@ -447,7 +457,7 @@ end
 
 surface.CreateFont( "rb655_easy_bonemerge_font", {
 	size = ScreenScale( 8 ),
-	font = "Roboto-Bk"
+	font = "Roboto"
 } )
 
 local function boxText( txt, _x, _y )
