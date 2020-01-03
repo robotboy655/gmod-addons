@@ -66,11 +66,11 @@ spawnmenu.AddContentType( "sound", function( container, obj )
 
 	icon.OpenMenu = function( icon )
 		local menu = DermaMenu()
-			menu:AddOption( "Copy to clipboard", function() SetClipboardText( obj.spawnname ) end )
-			menu:AddOption( "Play on all clients", function() RunConsoleCommand( "rb655_playsound_all", obj.spawnname ) end )
-			menu:AddOption( "Stop all sounds", function() RunConsoleCommand( "stopsound" ) end )
+			menu:AddOption( "#spawnmenu.menu.copy", function() SetClipboardText( obj.spawnname ) end ):SetIcon( "icon16/page_copy.png" )
+			menu:AddOption( "Play on all clients", function() RunConsoleCommand( "rb655_playsound_all", obj.spawnname ) end ):SetIcon( "icon16/sound.png" )
+			menu:AddOption( "Stop all sounds", function() RunConsoleCommand( "stopsound" ) end ):SetIcon( "icon16/sound_mute.png" )
 			menu:AddSpacer()
-			menu:AddOption( "Delete", function() icon:Remove() hook.Run( "SpawnlistContentChanged", icon ) end )
+			menu:AddOption( "#spawnmenu.menu.delete", function() icon:Remove() hook.Run( "SpawnlistContentChanged", icon ) end ):SetIcon( "icon16/bin_closed.png" )
 		menu:Open()
 	end
 
@@ -225,20 +225,30 @@ end ) end )
 
 /* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
 
-local function MaterialClick( obj )
-	local mat = Material( obj.spawnname )
+local function IsMaterialUsableOnEntities( matPath )
+	-- A png file? No thanks
+	if ( string.GetExtensionFromFilename( matPath ) ) then return false end
 
-	if ( !string.GetExtensionFromFilename( obj.spawnname )
-	&& !string.find( mat:GetShader(), "LightmappedGeneric" )
+	local mat = Material( matPath )
+	if ( !string.find( mat:GetShader(), "LightmappedGeneric" )
 	&& !string.find( mat:GetShader(), "WorldVertexTransition" )
 	&& !string.find( mat:GetShader(), "Spritecard" )
 	&& !string.find( mat:GetShader(), "Water" )
-	-- && !string.find( mat:GetShader(), "UnlitGeneric" )
+	&& !string.find( mat:GetShader(), "Cable" )
+	--&& !string.find( mat:GetShader(), "UnlitGeneric" )
 	&& !string.find( mat:GetShader(), "Refract" ) ) then
 		return true
 	end
 
 	return false
+end
+
+local DisplayedWarning = false
+local function DisplayOneTimeWarning()
+	if ( DisplayedWarning ) then return end
+	DisplayedWarning = true
+
+	Derma_Message( "Please note that not all materials are usable on entities, such as map textures, etc.\nYou can still try though!", "Warning", "OK" )
 end
 
 spawnmenu.AddContentType( "material", function( container, obj )
@@ -256,26 +266,28 @@ spawnmenu.AddContentType( "material", function( container, obj )
 	end
 
 	icon.DoClick = function()
-		if ( MaterialClick( obj ) ) then
-			RunConsoleCommand( "material_override", obj.spawnname )
-			spawnmenu.ActivateTool( "material" )
-			surface.PlaySound( "garrysmod/ui_click.wav" )
-		end
+		if ( !IsMaterialUsableOnEntities( obj.spawnname ) ) then DisplayOneTimeWarning() end
+
+		RunConsoleCommand( "material_override", obj.spawnname )
+		spawnmenu.ActivateTool( "material" )
+		surface.PlaySound( "garrysmod/ui_click.wav" )
 	end
 
 	icon.OpenMenu = function( icon )
 		local menu = DermaMenu()
-			menu:AddOption( "Copy to Clipboard", function() SetClipboardText( obj.spawnname ) end )
+			menu:AddOption( "#spawnmenu.menu.copy", function() SetClipboardText( obj.spawnname ) end ):SetIcon( "icon16/page_copy.png" )
 
-			if ( MaterialClick( obj ) ) then
-				menu:AddOption( "Use with Material Tool", function()
-					RunConsoleCommand( "material_override", obj.spawnname )
-					spawnmenu.ActivateTool( "material" )
-				end )
+			local str = "Use with Material Tool"
+			if ( !IsMaterialUsableOnEntities( obj.spawnname ) ) then
+				str = "Try to use with Material Tool (Probably won't work)"
 			end
+			menu:AddOption( str, function()
+				RunConsoleCommand( "material_override", obj.spawnname )
+				spawnmenu.ActivateTool( "material" )
+			end ):SetIcon( "icon16/pencil.png" )
 
 			menu:AddSpacer()
-			menu:AddOption( "Delete", function() icon:Remove() hook.Run( "SpawnlistContentChanged", icon ) end )
+			menu:AddOption( "#spawnmenu.menu.delete", function() icon:Remove() hook.Run( "SpawnlistContentChanged", icon ) end ):SetIcon( "icon16/bin_closed.png" )
 		menu:Open()
 	end
 
@@ -516,7 +528,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_post_processing", functio
 		pnlContent:SwitchPanel( self.PropPanel )
 	end
 
-	// Get the table
+	-- Get the table
 
 	local Categorised = {}
 	local PostProcess = list.Get( "PostProcess" )
@@ -530,7 +542,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_post_processing", functio
 		end
 	end
 
-	// Put table into panels
+	-- Put table into panels
 
 	for CategoryName, v in SortedPairs( Categorised ) do
 
