@@ -23,7 +23,7 @@ properties.Add( "rb655_make_animatable", {
 		if ( !IsValid( ply ) or !IsValid( ent ) or !self:Filter( ent, ply ) ) then return false end
 
 		local prop_animatable = ents.Create( "prop_animatable" )
-		prop_animatable:SetModel( ent:GetModel() )
+		prop_animatable:SetModel( ent:GetClass() == "prop_effect" and ent.AttachedEntity:GetModel() or ent:GetModel() )
 		prop_animatable:SetPos( ent:GetPos() )
 		prop_animatable:SetAngles( ent:GetAngles() )
 
@@ -45,6 +45,7 @@ properties.Add( "rb655_make_animatable", {
 
 		prop_animatable.EntityMods = ent.EntityMods
 		prop_animatable.BoneMods = ent.BoneMods
+		if ent:GetClass() == "prop_effect" then prop_animatable:PhysicsInitSphere(1, "default") end
 		duplicator.ApplyEntityModifiers( nil, prop_animatable )
 		duplicator.ApplyBoneModifiers( nil, prop_animatable )
 
