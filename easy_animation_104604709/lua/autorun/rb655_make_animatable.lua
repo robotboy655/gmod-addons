@@ -22,6 +22,11 @@ properties.Add( "rb655_make_animatable", {
 
 		if ( !IsValid( ply ) or !IsValid( ent ) or !self:Filter( ent, ply ) ) then return false end
 
+		local entActual = ent
+		if ( IsValid( ent.AttachedEntity ) ) then
+			ent = ent.AttachedEntity
+		end
+
 		local prop_animatable = ents.Create( "prop_animatable" )
 		prop_animatable:SetModel( ent:GetModel() )
 		prop_animatable:SetPos( ent:GetPos() )
@@ -48,15 +53,16 @@ properties.Add( "rb655_make_animatable", {
 		duplicator.ApplyEntityModifiers( nil, prop_animatable )
 		duplicator.ApplyBoneModifiers( nil, prop_animatable )
 
-		if ( string.find( ent:GetClass(), "prop_ragdoll" ) or ent:IsNPC() ) then -- We use string find because there are might be subclasses, like prop_ragdoll_multiplayer or something
+		-- We use string find because there are might be subclasses, like prop_ragdoll_multiplayer or something
+		if ( string.find( entActual:GetClass(), "prop_ragdoll" ) or entActual:IsNPC() ) then
 			prop_animatable:FixRagdoll() -- This WILL have false-positives, but it will have to do for now
 		end
 
-		undo.ReplaceEntity( ent, prop_animatable )
-		cleanup.ReplaceEntity( ent, prop_animatable )
+		undo.ReplaceEntity( entActual, prop_animatable )
+		cleanup.ReplaceEntity( entActual, prop_animatable )
 
-		constraint.RemoveAll( ent ) -- Remove all constraints ( this stops ropes from hanging around )
-		ent:Remove()
+		constraint.RemoveAll( entActual ) -- Remove all constraints ( this stops ropes from hanging around )
+		entActual:Remove()
 	end
 } )
 

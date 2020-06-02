@@ -18,21 +18,34 @@ function ENT:SetupDataTables()
 end
 
 if ( SERVER ) then
+
 	function ENT:Initialize()
-		self:SetSolid( SOLID_VPHYSICS )
+		-- This is a silly way to check if the model has a physics mesh or not
+		self:PhysicsInit( SOLID_VPHYSICS )
+
+		-- We got no physics? Do some fake shit
+		if ( !IsValid( self:GetPhysicsObject() ) ) then
+			local mins, maxs = self:OBBMins(), self:OBBMaxs()
+			self:SetCollisionBounds( mins, maxs )
+			self:SetSolid( SOLID_BBOX )
+		end
+
+		self:PhysicsDestroy()
 		self:SetMoveType( MOVETYPE_NONE )
 	end
 
 	function ENT:FixRagdoll()
-		local mins = self:OBBMins()
-		local maxs = self:OBBMaxs()
-		mins.z = 0
+		local mins, maxs = self:OBBMins(), self:OBBMaxs()
 
+		-- Just in case
 		self.OriginalCollisions = mins
 		self.OriginalCollisionsMax = maxs
 
-		self:PhysicsInitBox( mins, maxs )
-		self:SetMoveType( MOVETYPE_NONE )
+		-- Fix some NPC ragdolls flying above ground
+		mins.z = 0
+
+		self:SetCollisionBounds( mins, maxs )
+		self:SetSolid( SOLID_BBOX )
 
 		-- Used to determine if this animatable prop should have the "Turn into Ragdoll" option.
 		self:SetIsRagdoll( true )
@@ -62,15 +75,13 @@ if ( SERVER ) then
 end
 
 function ENT:Think()
-	-- self:SetCollisionBounds( self:GetModelBounds() )
-
+	-- Ensure the animation plays smoothly
 	self:NextThink( CurTime() )
 	return true
 end
 
 if ( SERVER ) then return end
 
-local bboxMat = Material( "vgui/white" )
 function ENT:DrawBBox()
 	if ( GetConVarNumber( "rb655_easy_animation_noglow" ) != 0 ) then return end
 
@@ -81,18 +92,20 @@ function ENT:DrawBBox()
 
 	local mins = self:OBBMins()
 	local maxs = self:OBBMaxs()
-	local corner1 = self:GetPos() + Vector( maxs.x, mins.y, mins.z )
-	local corner2 = self:GetPos() + Vector( maxs.x, maxs.y, mins.z )
-	local corner3 = self:GetPos() + Vector( mins.x, maxs.y, mins.z )
 
-	render.SetMaterial( bboxMat )
-	render.DrawQuad(  corner3,corner2, corner1, self:GetPos() + mins )
+	if ( self:GetSolid() == SOLID_BBOX ) then
+		render.DrawWireframeBox( self:GetPos(), Angle( 0, 0, 0 ), mins, maxs )
+	else
+		render.DrawWireframeBox( self:GetPos(), angle_zero, mins, maxs )
+	end
 end
 
 function ENT:Draw()
-	-- self:DrawBBox()
+	self:DrawBBox()
 
+	-- This probably shouldn't run every frame..
 	self:SetRenderBounds( self:GetModelBounds() )
+
 	self:DrawModel()
 end
 
