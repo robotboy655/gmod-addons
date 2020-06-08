@@ -94,9 +94,9 @@ function ENT:DrawBBox()
 	local maxs = self:OBBMaxs()
 
 	if ( self:GetSolid() == SOLID_BBOX ) then
-		render.DrawWireframeBox( self:GetPos(), Angle( 0, 0, 0 ), mins, maxs )
-	else
 		render.DrawWireframeBox( self:GetPos(), angle_zero, mins, maxs )
+	else
+		render.DrawWireframeBox( self:GetPos(), self:GetAngles(), mins, maxs )
 	end
 end
 
