@@ -61,6 +61,35 @@ local function renderDrawBox( pos, ang, min, max, bWire )
 	else
 		render.DrawBox( pos, ang, min, max )
 	end
+
+	-- 3D2D experiment gone wrong
+	/*if ( GetConVarNumber( "rb655_easy_inspector_box_dim" ) < 1 ) then return end
+
+	-- Do not modify the original data
+	local pos = Vector( pos )
+	local ang = Angle( ang )
+
+	local fwd = pos + ang:Forward() * max.x + ang:Up() * max.z - ang:Right() * max.y
+	local right = pos + ang:Forward() * max.x / 2 + ang:Up() * max.z - ang:Right() * max.y
+	ang:RotateAroundAxis( ang:Forward(), 90 )
+	ang:RotateAroundAxis( ang:Right(), -90 )
+	cam.Start3D2D( fwd, ang, .5 )
+		surface.SetDrawColor( 0, 0, 0, 255 )
+		//surface.DrawRect( 0, 0, 8, 8 )
+
+		draw.SimpleText( max.y - min.y, "rb655_attachment", 0, 0, color_white )
+	cam.End3D2D()
+
+	ang:RotateAroundAxis( ang:Right(), -90 )
+	cam.Start3D2D( right, ang, .5 )
+		surface.SetDrawColor( 0, 0, 0, 255 )
+		//surface.DrawRect( 0, 0, 8, 8 )
+
+		draw.SimpleText( max.x - min.x, "rb655_attachment", 0, 0, color_white )
+		draw.SimpleText( max.x - min.x, "rb655_attachment", 0, 0, color_white )
+		draw.SimpleText( max.x - min.x, "rb655_attachment", 0, 0, color_white )
+	cam.End3D2D()*/
+
 end
 
 local function renderBoxDimensions( pos, ang, min, max )
@@ -129,7 +158,7 @@ AddInfoFunc( {
 			draw.RoundedBox( 0, pos.x - 2, pos.y - 2, 4, 4, Color( 0, 0, 0 ) )
 
 			local offset = 0
-			for id, p in pairs( points or {} ) do
+			for pid, p in pairs( points or {} ) do
 				if ( p.x == pos.x && p.y == pos.y ) then
 					offset = offset + 10
 				end
@@ -426,14 +455,14 @@ AddInfoFunc( {
 		local p = ( pos + Vector( vel.x / mul, 0, 0 ) ):ToScreen()
 		draw.SimpleText( math.floor( ConvertToUnit( vel.x, true ) * 10 ) / 10, "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
-		local p = ( pos + Vector( 0, vel.y / mul, 0 ) ):ToScreen()
-		draw.SimpleText( math.floor( ConvertToUnit( vel.y, true ) * 10 ) / 10, "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		local p2 = ( pos + Vector( 0, vel.y / mul, 0 ) ):ToScreen()
+		draw.SimpleText( math.floor( ConvertToUnit( vel.y, true ) * 10 ) / 10, "rb655_attachment", p2.x, p2.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
-		local p = ( pos + Vector( 0, 0, vel.z / mul ) ):ToScreen()
-		draw.SimpleText( math.floor( ConvertToUnit( vel.z, true ) * 10 ) / 10, "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		local p3 = ( pos + Vector( 0, 0, vel.z / mul ) ):ToScreen()
+		draw.SimpleText( math.floor( ConvertToUnit( vel.z, true ) * 10 ) / 10, "rb655_attachment", p3.x, p3.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
-		local p = ( pos + vel / mul ):ToScreen()
-		draw.SimpleText( math.floor( ConvertToUnit( vel:Length(), true ) * 10 ) / 10, "rb655_attachment", p.x, p.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		local p4 = ( pos + vel / mul ):ToScreen()
+		draw.SimpleText( math.floor( ConvertToUnit( vel:Length(), true ) * 10 ) / 10, "rb655_attachment", p4.x, p4.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 	end
 } )
 AddInfoFunc( {
@@ -456,11 +485,11 @@ AddInfoFunc( {
 		local p = ( pos + ang:Forward() * 51 ):ToScreen()
 		draw.SimpleText( "Forward", "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
-		local p = ( pos + ang:Right() * 51 ):ToScreen()
-		draw.SimpleText( "Right", "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		local p2 = ( pos + ang:Right() * 51 ):ToScreen()
+		draw.SimpleText( "Right", "rb655_attachment", p2.x, p2.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
-		local p = ( pos + ang:Up() * 51 ):ToScreen()
-		draw.SimpleText( "Up", "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		local p3 = ( pos + ang:Up() * 51 ):ToScreen()
+		draw.SimpleText( "Up", "rb655_attachment", p3.x, p3.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 	end
 } )
 AddInfoFunc( {
@@ -665,9 +694,9 @@ else
 		local done = net.ReadBool()
 
 		local len = net.ReadUInt( 16 )
-		local data = net.ReadData( len )
+		local chunk = net.ReadData( len )
 
-		buffer = buffer .. data
+		buffer = buffer .. chunk
 
 		if ( !done ) then return end
 
