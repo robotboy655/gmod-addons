@@ -8,7 +8,7 @@ properties.Add( "rb655_make_animatable", {
 	Filter = function( self, ent, ply )
 		if ( !IsValid( ent ) or !gamemode.Call( "CanProperty", ply, "rb655_make_animatable", ent ) ) then return false end
 		if ( ent:GetClass() == "prop_animatable" ) then return false end
-		if ( ent:IsPlayer() ) then return false end
+		if ( ent:IsPlayer() || !ent:GetModel() || ent:GetModel():StartWith( "*" ) ) then return false end
 		--if ( string.find( ent:GetClass(), "prop_physics" ) or string.find( ent:GetClass(), "prop_ragdoll" ) ) then return true end
 		return true
 	end,
@@ -32,10 +32,10 @@ properties.Add( "rb655_make_animatable", {
 		prop_animatable:SetPos( ent:GetPos() )
 		prop_animatable:SetAngles( ent:GetAngles() )
 
-		prop_animatable:SetSkin( ent:GetSkin() )
+		prop_animatable:SetSkin( ent:GetSkin() or 0 )
 		prop_animatable:SetFlexScale( ent:GetFlexScale() )
 		for i = 0, ent:GetFlexNum() - 1 do prop_animatable:SetFlexWeight( i, ent:GetFlexWeight( i ) ) end
-		for i = 0, ent:GetNumBodyGroups() - 1 do prop_animatable:SetBodygroup( i, ent:GetBodygroup( i ) ) end
+		for i = 0, ( ent:GetNumBodyGroups() or 0 ) - 1 do prop_animatable:SetBodygroup( i, ent:GetBodygroup( i ) ) end
 		-- for i = 0, ent:GetNumPoseParameters() - 1 do prop_animatable:SetPoseParameter( i, ent:GetPoseParameter( i ) ) end
 		for i = 0, ent:GetBoneCount() do
 			prop_animatable:ManipulateBoneScale( i, ent:GetManipulateBoneScale( i ) )
