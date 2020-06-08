@@ -51,452 +51,475 @@ local function ConvertToUnit( units, speed )
 	return units
 end
 
-local InfoFuncs = { {
-		name = "Attachments",
-		check = function( ent )
-			if ( !ent:GetAttachments() or #ent:GetAttachments() < 1 ) then
-				return "Entity doesn't have any attachments!"
-			end
-		end,
-		func = function( ent, labels, dirs )
+local InfoFuncs = {}
+local function AddInfoFunc( tbl )
+	table.insert( InfoFuncs, tbl )
+end
 
-			local points = {}
-			for id, t in pairs( ent:GetAttachments() or {} ) do
-				local angpos = ent:GetAttachment( t.id )
+-- Global func for other mods, if they care
+function rb655_EasyInspector_AddInfoFunc( tbl )
+	AddInfoFunc( tbl )
+end
 
-				local pos = angpos.Pos:ToScreen()
-
-				if ( dirs ) then
-					cam.Start3D( EyePos(), EyeAngles() )
-					render.DrawLine( angpos.Pos, angpos.Pos + angpos.Ang:Forward() * 8, Color( 64, 178, 255 ), false )
-					cam.End3D()
-				end
-
-				draw.RoundedBox( 0, pos.x - 3, pos.y - 3, 6, 6, Color( 255, 255, 255 ) )
-				draw.RoundedBox( 0, pos.x - 2, pos.y - 2, 4, 4, Color( 0, 0, 0 ) )
-
-				local offset = 0
-				for id, p in pairs( points or {} ) do
-					if ( p.x == pos.x && p.y == pos.y ) then
-						offset = offset + 10
-					end
-				end
-
-				if ( labels ) then
-					draw.SimpleText( t.name .. " (" .. t.id .. ")", "rb655_attachment", pos.x, pos.y - 16 + offset, color_white, 1, 0 )
-				end
-
-				table.insert( points, pos )
-
-			end
+AddInfoFunc( {
+	name = "Attachments",
+	check = function( ent )
+		if ( !ent:GetAttachments() or #ent:GetAttachments() < 1 ) then
+			return "Entity doesn't have any attachments!"
 		end
-	}, {
-		name = "Bones",
-		check = function( ent )
-			if ( !ent:GetBoneCount() or ent:GetBoneCount() < 1 ) then
-				return "Entity doesn't have any bones!"
-			end
-		end,
-		func = function( ent, labels, dirs )
+	end,
+	func = function( ent, labels, dirs )
 
-			local points = {}
-			for i = 0, ent:GetBoneCount() - 1 do
+		local points = {}
+		for id, t in pairs( ent:GetAttachments() or {} ) do
+			local angpos = ent:GetAttachment( t.id )
 
-				local pos = ent:GetBonePosition( i )
-				if ( pos == ent:GetPos() && ent:GetBoneMatrix( i ) ) then
-					pos = ent:GetBoneMatrix( i ):GetTranslation()
-				end
-
-				if ( ent:GetBoneName( i ) == "__INVALIDBONE__" ) then continue end
-
-				if ( dirs && ent:GetBoneMatrix( i ) ) then
-
-					cam.Start3D( EyePos(), EyeAngles() )
-					for id, bone in pairs( ent:GetChildBones( i ) ) do
-
-						local pos2 = ent:GetBonePosition( bone )
-						if ( pos2 == ent:GetPos() && ent:GetBoneMatrix( bone ) ) then
-							pos2 = ent:GetBoneMatrix( bone ):GetTranslation()
-						end
-
-						render.DrawLine( pos, pos2, Color( 255, 178, 64 ), false )
-
-					end
-					cam.End3D()
-				end
-
-				pos = pos:ToScreen()
-
-				draw.RoundedBox( 0, pos.x - 3, pos.y - 3, 6, 6, Color( 255, 255, 255 ) )
-				draw.RoundedBox( 0, pos.x - 2, pos.y - 2, 4, 4, Color( 0, 0, 0 ) )
-
-				local offset = 0
-				for id, p in pairs( points or {} ) do
-					if ( p.x == pos.x && p.y == pos.y ) then
-						offset = offset + 10
-					end
-				end
-
-				if ( labels ) then
-					draw.SimpleText( ent:GetBoneName( i ) .. " (" .. i .. ")", "rb655_attachment", pos.x, pos.y - 16 + offset, color_white, 1, 0 )
-				end
-
-				table.insert( points, pos )
-
-			end
-		end
-	}, {
-		name = "Physics Box",
-		check = function( ent )
-			if ( !ent.InspectorMeshes ) then
-				return "Entity doesn't have any physics objects! Or we failed to get it."
-			end
-		end,
-		-- This is a hacky one..
-		func = function( ent, labels, dirs )
-
-			if ( ent.InspectorMeshes && ( !ent.InspectorMesh || ( ent.InsepctorPhysHash != ent.InsepctorPhysHashCache && gMeshCache[ ent.InsepctorPhysHash ] ) ) ) then
-				local gMesh = {}
-				local gMeshIDs = {}
-				local i = 0
-				for id, tab in pairs( ent.InspectorMeshes ) do
-					for _, b in pairs( tab ) do
-						gMesh[ i ] = Mesh()
-						gMesh[ i ]:BuildFromTriangles( b )
-						gMeshIDs[ i ] = id
-						i = i + 1
-					end
-				end
-
-				ent.InspectorMesh = gMesh
-				ent.InspectorMeshIDs = gMeshIDs
-				ent.InsepctorPhysHashCache = ent.InsepctorPhysHash
-			end
-
-			if ( !ent.InspectorMesh ) then return end
-
-			cam.Start3D( EyePos(), EyeAngles() )
-
-			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-			render.SetMaterial( mat_wireframe )
-			for i, mesh in pairs( ent.InspectorMesh ) do
-				local matrix = Matrix()
-				local bonemat = ent:GetBoneMatrix( ent:TranslatePhysBoneToBone( ent.InspectorMeshIDs && ent.InspectorMeshIDs[i] or 0) )
-				if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetAngles( bonemat:GetAngles() ) else matrix:SetAngles( ent:GetAngles() ) end
-				if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetTranslation( bonemat:GetTranslation() ) else matrix:SetTranslation( ent:GetPos() ) end
-
-				cam.PushModelMatrix( matrix )
-
-				mesh:Draw()
-
-				cam.PopModelMatrix()
-			end
-
-			cam.End3D()
-
-		end
-	},/* {
-		name = "Physics Box CL",
-		check = function( ent )
-			if ( ent:GetPhysicsObjectCount() < 1 ) then
-				return "Entity doesn't have any clientside physics objects! Or we failed to get it."
-			end
-		end,
-		-- This is a hacky one..
-		func = function( ent, labels, dirs )
-
-			cam.Start3D( EyePos(), EyeAngles() )
-
-			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-			render.SetMaterial( mat_wireframe )
-			for i=0, ent:GetPhysicsObjectCount()-1 do
-				if ( !IsValid( ent:GetPhysicsObjectNum( i ) ) ) then continue end
-				local matrix = Matrix()
-				-- local bonemat = ent:GetBoneMatrix( ent:TranslatePhysBoneToBone( i) )
-				-- if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetAngles( bonemat:GetAngles() ) else matrix:SetAngles( ent:GetAngles() ) end
-				-- if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetTranslation( bonemat:GetTranslation() ) else matrix:SetTranslation( ent:GetPos() ) end
-				matrix:SetAngles( ent:GetPhysicsObjectNum( i ):GetAngles() )
-				matrix:SetTranslation( ent:GetPhysicsObjectNum( i ):GetPos() ) 
-				cam.PushModelMatrix( matrix )
-
-				local mesh = Mesh()
-				mesh:BuildFromTriangles( ent:GetPhysicsObjectNum( i ):GetMesh() )
-				mesh:Draw()
-
-				cam.PopModelMatrix()
-			end
-
-			cam.End3D()
-
-		end
-	},*/ {
-		name = "Hit Groups",
-		check = function( ent )
-			if ( !ent:GetHitBoxGroupCount() ) then
-				return "Entity doesn't have any hit groups!"
-			end
-		end,
-		func = function( ent, labels, dirs )
-
-			cam.Start3D( EyePos(), EyeAngles() )
-			for i = 0, ent:GetHitBoxGroupCount() - 1 do
-				for j = 0, ent:GetHitBoxCount( i ) - 1 do
-					local bone = ent:GetHitBoxBone( j, i )
-					if ( !bone or bone < 0 ) then continue end
-
-					local mins, maxs = ent:GetHitBoxBounds( j, i )
-					local scale = 1
-					local pos, ang = ent:GetBonePosition( bone )
-
-					if ( ent:GetBoneMatrix( bone ) ) then
-						scale = ent:GetBoneMatrix( bone ):GetScale()
-						ang = ent:GetBoneMatrix( bone ):GetAngles()
-					end
-
-					mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-					render.SetMaterial( mat_wireframe )
-					render.DrawBox( pos, ang, mins * scale, maxs * scale )
-				end
-			end
-			cam.End3D()
-
-		end
-	}, {
-		name = "Orientated Bounding Box",
-		func = function( ent, labels, dirs )
-			local pos = ent:GetPos()
-			cam.Start3D( EyePos(), EyeAngles() )
-				mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-				render.SetMaterial( mat_wireframe )
-				local ang = ent:GetAngles() if ( ent:IsPlayer() ) then ang.p = 0 end
-				render.DrawBox( ent:GetPos(), ang, ent:OBBMins(), ent:OBBMaxs() )
-			cam.End3D()
-
-			if ( !labels ) then return end
-
-			local pos = ent:GetPos()
-			local ang = ent:GetAngles() if ( ent:IsPlayer() ) then ang.p = 0 end
-
-			local p = LocalToWorld( ent:OBBMins(), ang, pos, ang ):ToScreen()
-			local min = ent:OBBMins()
-			draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = LocalToWorld( ent:OBBCenter(), ang, pos, ang ):ToScreen() --ent:LocalToWorld( ent:OBBCenter() ):ToScreen()
-			local cen = ent:OBBCenter()
-			draw.SimpleText( Format( "Center ( %i, %i, %i )", cen.x, cen.y, cen.z ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = LocalToWorld( ent:OBBMaxs(), ang, pos, ang ):ToScreen() -- ent:LocalToWorld( ent:OBBMaxs() ):ToScreen()
-			local max = ent:OBBMaxs()
-			draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-		end
-	}, {
-		name = "Render Bounds",
-		func = function( ent, labels, dirs )
-			local min, max = ent:GetRenderBounds()
-			cam.Start3D( EyePos(), EyeAngles() )
-				mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-				render.SetMaterial( mat_wireframe )
-				render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
-			cam.End3D()
-
-			if ( !labels ) then return end
-
-			local p = ent:LocalToWorld( min ):ToScreen()
-			draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
-			draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ent:LocalToWorld( max ):ToScreen()
-			draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-		end
-	}, {
-		name = "Collision Bounds",
-		func = function( ent, labels, dirs )
-			local min, max = ent:GetCollisionBounds()
-			cam.Start3D( EyePos(), EyeAngles() )
-				mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-				render.SetMaterial( mat_wireframe )
-				render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
-			cam.End3D()
-
-			if ( !labels ) then return end
-
-			local p = ent:LocalToWorld( min ):ToScreen()
-			draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
-			draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ent:LocalToWorld( max ):ToScreen()
-			draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-		end
-	}, {
-		name = "Model Bounds",
-		func = function( ent, labels, dirs )
-			local min, max = ent:GetModelBounds()
-			cam.Start3D( EyePos(), EyeAngles() )
-				mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-				render.SetMaterial( mat_wireframe )
-				render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
-			cam.End3D()
-
-			if ( !labels ) then return end
-
-			local p = ent:LocalToWorld( min ):ToScreen()
-			draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
-			draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ent:LocalToWorld( max ):ToScreen()
-			draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-		end
-	}, {
-		name = "Model Render Bounds",
-		func = function( ent, labels, dirs )
-			local min, max = ent:GetModelRenderBounds()
-			cam.Start3D( EyePos(), EyeAngles() )
-				mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-				render.SetMaterial( mat_wireframe )
-				render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
-			cam.End3D()
-
-			if ( !labels ) then return end
-
-			local p = ent:LocalToWorld( min ):ToScreen()
-			draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
-			draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ent:LocalToWorld( max ):ToScreen()
-			draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-		end
-	}, {
-		name = "Velocity",
-		func = function( ent, labels, dirs )
-
-			local vel = ent:GetVelocity()
-			local pos = ent:GetPos()
-			if ( pos == vector_origin ) then pos = ent:LocalToWorld( ent:OBBCenter() ) end
-
-			cam.Start3D( EyePos(), EyeAngles() )
-				local mul = 4
-				render.DrawLine( pos, pos + Vector( vel.x / mul, 0, 0 ), Color( 255, 0, 0 ), false )
-				render.DrawLine( pos, pos + Vector( 0, vel.y / mul, 0 ), Color( 0, 255, 0 ), false )
-				render.DrawLine( pos, pos + Vector( 0, 0, vel.z / mul ), Color( 0, 128, 255 ), false )
-				render.DrawLine( pos, pos + vel / mul, Color( 255, 255, 255 ), false )
-			cam.End3D()
-
-			if ( !labels ) then return end
-
-			local p = ( pos + Vector( vel.x / mul, 0, 0 ) ):ToScreen()
-			draw.SimpleText( math.floor( ConvertToUnit( vel.x, true ) ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ( pos + Vector( 0, vel.y / mul, 0 ) ):ToScreen()
-			draw.SimpleText( math.floor( ConvertToUnit( vel.y, true ) ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ( pos + Vector( 0, 0, vel.z / mul ) ):ToScreen()
-			draw.SimpleText( math.floor( ConvertToUnit( vel.z, true ) ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ( pos + vel / mul ):ToScreen()
-			draw.SimpleText( math.floor( ConvertToUnit( vel:Length(), true ) ), "rb655_attachment", p.x, p.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-		end
-	}, {
-		name = "Directions",
-		func = function( ent, labels, dirs )
-
-			local ang = ent:GetAngles()
-			local pos = ent:GetPos()
-			if ( pos == vector_origin ) then pos = ent:LocalToWorld( ent:OBBCenter() ) end
-
-			cam.Start3D( EyePos(), EyeAngles() )
-				local mul = 1
-				render.DrawLine( pos, pos + ang:Forward() * 50, Color( 255, 0, 0 ), false )
-				render.DrawLine( pos, pos + ang:Right() * 50, Color( 0, 255, 0 ), false )
-				render.DrawLine( pos, pos + ang:Up() * 50, Color( 0, 128, 255 ), false )
-			cam.End3D()
-
-			if ( !labels ) then return end
-
-			local p = ( pos + ang:Forward() * 51 ):ToScreen()
-			draw.SimpleText( "Forward", "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ( pos + ang:Right() * 51 ):ToScreen()
-			draw.SimpleText( "Right", "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-			local p = ( pos + ang:Up() * 51 ):ToScreen()
-			draw.SimpleText( "Up", "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-		end
-	}, {
-		name = "World To Local",
-		world = true,
-		func = function( ent, labels, dirs )
-
-			local tr = LocalPlayer():GetEyeTrace()
-			local pos = ent == game.GetWorld() && vector_origin or ent:GetPos()
-			if ( pos == vector_origin && ent != game.GetWorld() ) then pos = ent:LocalToWorld( ent:OBBCenter() ) end
-
-			local pos1 = ent == game.GetWorld() && IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) && LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldPos" ) or ent:LocalToWorld( ent:GetNWVector( "LocalPos" ) )
-			local pos2 = tr.HitPos
-			local pos3 = ent == game.GetWorld() && vector_origin or ent:GetPos()
-
-			local dir = ent == game.GetWorld() && IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) && LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldDir" ) or ent:GetNWVector( "LocalDir" )
-
-			cam.Start3D( EyePos(), EyeAngles() )
-				render.DrawLine( pos, pos1, Color( 255, 255, 255 ), false )
-				render.DrawLine( pos, pos2, Color( 255, 128, 0 ), false )
-				render.DrawLine( pos1, pos2, Color( 0, 128, 255 ), false )
-			cam.End3D()
-
-			if ( labels ) then
-				local p1 = pos1:ToScreen()
-				draw.SimpleText( "Hit Pos", "rb655_attachment", p1.x, p1.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-				draw.SimpleText( math.floor( ConvertToUnit( pos1:Distance( pos3 ) ) ), "rb655_attachment", p1.x, p1.y + 10, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-				local p2 = pos2:ToScreen()
-				draw.SimpleText( "Aim Pos", "rb655_attachment", p2.x, p2.y, Color( 255, 128, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-				draw.SimpleText( math.floor( ConvertToUnit( pos2:Distance( pos3 ) ) ), "rb655_attachment", p2.x, p2.y + 10, Color( 255, 128, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-				local p = {
-					x = ( p1.x + p2.x ) / 2,
-					y = ( p1.y + p2.y ) / 2
-				}
-				draw.SimpleText( "Distance", "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-				draw.SimpleText( math.floor( ConvertToUnit( pos1:Distance( pos2 ) ) ), "rb655_attachment", p.x, p.y + 10, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-			end
+			local pos = angpos.Pos:ToScreen()
 
 			if ( dirs ) then
 				cam.Start3D( EyePos(), EyeAngles() )
-					render.DrawLine( pos2, pos2 + tr.HitNormal * 8, Color( 255, 128, 0 ), false )
-					render.DrawLine( pos1, pos1 + dir * 8, Color( 255, 255, 255 ), false )
+				render.DrawLine( angpos.Pos, angpos.Pos + angpos.Ang:Forward() * 8, Color( 64, 178, 255 ), false )
 				cam.End3D()
 			end
 
-		end
-	}, {
-		name = "Sequence",
-		func = function( ent, labels, dirs )
+			draw.RoundedBox( 0, pos.x - 3, pos.y - 3, 6, 6, Color( 255, 255, 255 ) )
+			draw.RoundedBox( 0, pos.x - 2, pos.y - 2, 4, 4, Color( 0, 0, 0 ) )
 
-			local seqinfo = ent:GetSequenceInfo( ent:GetSequence() )
-
-			cam.Start3D( EyePos(), EyeAngles() )
-				local ang = ent:GetAngles()
-				if ( ent:IsPlayer() ) then ang.p = 0 end
-				render.DrawWireframeBox( ent:GetPos(), ang, seqinfo.bbmin, seqinfo.bbmax, Color( 255, 255, 255 ), true )
-			cam.End3D()
-
-			local textpos = ( ent:GetPos() + Vector( 0, 0, seqinfo.bbmax.z + 10 ) ):ToScreen()
-
-			if ( textpos.visible ) then
-				draw.SimpleText( seqinfo.label, "rb655_attachment", textpos.x, textpos.y - 20, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER )
-				draw.SimpleText( seqinfo.activity .. ": " .. seqinfo.activityname, "rb655_attachment", textpos.x, textpos.y - 4, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER )
+			local offset = 0
+			for id, p in pairs( points or {} ) do
+				if ( p.x == pos.x && p.y == pos.y ) then
+					offset = offset + 10
+				end
 			end
 
+			if ( labels ) then
+				draw.SimpleText( t.name .. " (" .. t.id .. ")", "rb655_attachment", pos.x, pos.y - 16 + offset, color_white, 1, 0 )
+			end
+
+			table.insert( points, pos )
+
 		end
-	}
-}
+	end
+} )
+AddInfoFunc( {
+	name = "Bones",
+	check = function( ent )
+		if ( !ent:GetBoneCount() or ent:GetBoneCount() < 1 ) then
+			return "Entity doesn't have any bones!"
+		end
+	end,
+	func = function( ent, labels, dirs )
+
+		local points = {}
+		for i = 0, ent:GetBoneCount() - 1 do
+
+			local pos = ent:GetBonePosition( i )
+			if ( pos == ent:GetPos() && ent:GetBoneMatrix( i ) ) then
+				pos = ent:GetBoneMatrix( i ):GetTranslation()
+			end
+
+			if ( ent:GetBoneName( i ) == "__INVALIDBONE__" ) then continue end
+
+			if ( dirs && ent:GetBoneMatrix( i ) ) then
+
+				cam.Start3D( EyePos(), EyeAngles() )
+				for id, bone in pairs( ent:GetChildBones( i ) ) do
+
+					local pos2 = ent:GetBonePosition( bone )
+					if ( pos2 == ent:GetPos() && ent:GetBoneMatrix( bone ) ) then
+						pos2 = ent:GetBoneMatrix( bone ):GetTranslation()
+					end
+
+					render.DrawLine( pos, pos2, Color( 255, 178, 64 ), false )
+
+				end
+				cam.End3D()
+			end
+
+			pos = pos:ToScreen()
+
+			draw.RoundedBox( 0, pos.x - 3, pos.y - 3, 6, 6, Color( 255, 255, 255 ) )
+			draw.RoundedBox( 0, pos.x - 2, pos.y - 2, 4, 4, Color( 0, 0, 0 ) )
+
+			local offset = 0
+			for id, p in pairs( points or {} ) do
+				if ( p.x == pos.x && p.y == pos.y ) then
+					offset = offset + 10
+				end
+			end
+
+			if ( labels ) then
+				draw.SimpleText( ent:GetBoneName( i ) .. " (" .. i .. ")", "rb655_attachment", pos.x, pos.y - 16 + offset, color_white, 1, 0 )
+			end
+
+			table.insert( points, pos )
+
+		end
+	end
+} )
+AddInfoFunc( {
+	name = "Physics Box",
+	check = function( ent )
+		if ( !ent.InspectorMeshes ) then
+			return "Entity doesn't have any physics objects! Or we failed to get it."
+		end
+	end,
+	-- This is a hacky one..
+	func = function( ent, labels, dirs )
+
+		if ( ent.InspectorMeshes && ( !ent.InspectorMesh || ( ent.InsepctorPhysHash != ent.InsepctorPhysHashCache && gMeshCache[ ent.InsepctorPhysHash ] ) ) ) then
+			local gMesh = {}
+			local gMeshIDs = {}
+			local i = 0
+			for id, tab in pairs( ent.InspectorMeshes ) do
+				for _, b in pairs( tab ) do
+					gMesh[ i ] = Mesh()
+					gMesh[ i ]:BuildFromTriangles( b )
+					gMeshIDs[ i ] = id
+					i = i + 1
+				end
+			end
+
+			ent.InspectorMesh = gMesh
+			ent.InspectorMeshIDs = gMeshIDs
+			ent.InsepctorPhysHashCache = ent.InsepctorPhysHash
+		end
+
+		if ( !ent.InspectorMesh ) then return end
+
+		cam.Start3D( EyePos(), EyeAngles() )
+
+		mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
+		render.SetMaterial( mat_wireframe )
+		for i, mesh in pairs( ent.InspectorMesh ) do
+			local matrix = Matrix()
+			local bonemat = ent:GetBoneMatrix( ent:TranslatePhysBoneToBone( ent.InspectorMeshIDs && ent.InspectorMeshIDs[i] or 0) )
+			if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetAngles( bonemat:GetAngles() ) else matrix:SetAngles( ent:GetAngles() ) end
+			if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetTranslation( bonemat:GetTranslation() ) else matrix:SetTranslation( ent:GetPos() ) end
+
+			cam.PushModelMatrix( matrix )
+
+			mesh:Draw()
+
+			cam.PopModelMatrix()
+		end
+
+		cam.End3D()
+
+	end
+} )
+/*
+AddInfoFunc( {
+	name = "Physics Box CL",
+	check = function( ent )
+		if ( ent:GetPhysicsObjectCount() < 1 ) then
+			return "Entity doesn't have any clientside physics objects! Or we failed to get it."
+		end
+	end,
+	-- This is a hacky one..
+	func = function( ent, labels, dirs )
+
+		cam.Start3D( EyePos(), EyeAngles() )
+
+		mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
+		render.SetMaterial( mat_wireframe )
+		for i=0, ent:GetPhysicsObjectCount()-1 do
+			if ( !IsValid( ent:GetPhysicsObjectNum( i ) ) ) then continue end
+			local matrix = Matrix()
+			-- local bonemat = ent:GetBoneMatrix( ent:TranslatePhysBoneToBone( i) )
+			-- if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetAngles( bonemat:GetAngles() ) else matrix:SetAngles( ent:GetAngles() ) end
+			-- if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetTranslation( bonemat:GetTranslation() ) else matrix:SetTranslation( ent:GetPos() ) end
+			matrix:SetAngles( ent:GetPhysicsObjectNum( i ):GetAngles() )
+			matrix:SetTranslation( ent:GetPhysicsObjectNum( i ):GetPos() ) 
+			cam.PushModelMatrix( matrix )
+
+			local mesh = Mesh()
+			mesh:BuildFromTriangles( ent:GetPhysicsObjectNum( i ):GetMesh() )
+			mesh:Draw()
+
+			cam.PopModelMatrix()
+		end
+
+		cam.End3D()
+
+	end
+} )*/
+AddInfoFunc( {
+	name = "Hit Groups",
+	check = function( ent )
+		if ( !ent:GetHitBoxGroupCount() ) then
+			return "Entity doesn't have any hit groups!"
+		end
+	end,
+	func = function( ent, labels, dirs )
+
+		cam.Start3D( EyePos(), EyeAngles() )
+		for i = 0, ent:GetHitBoxGroupCount() - 1 do
+			for j = 0, ent:GetHitBoxCount( i ) - 1 do
+				local bone = ent:GetHitBoxBone( j, i )
+				if ( !bone or bone < 0 ) then continue end
+
+				local mins, maxs = ent:GetHitBoxBounds( j, i )
+				local scale = 1
+				local pos, ang = ent:GetBonePosition( bone )
+
+				if ( ent:GetBoneMatrix( bone ) ) then
+					scale = ent:GetBoneMatrix( bone ):GetScale()
+					ang = ent:GetBoneMatrix( bone ):GetAngles()
+				end
+
+				mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
+				render.SetMaterial( mat_wireframe )
+				render.DrawBox( pos, ang, mins * scale, maxs * scale )
+			end
+		end
+		cam.End3D()
+
+	end
+} )
+AddInfoFunc( {
+	name = "Orientated Bounding Box",
+	func = function( ent, labels, dirs )
+		local pos = ent:GetPos()
+		cam.Start3D( EyePos(), EyeAngles() )
+			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
+			render.SetMaterial( mat_wireframe )
+			local ang = ent:GetAngles() if ( ent:IsPlayer() ) then ang.p = 0 end
+			render.DrawBox( ent:GetPos(), ang, ent:OBBMins(), ent:OBBMaxs() )
+		cam.End3D()
+
+		if ( !labels ) then return end
+
+		local pos = ent:GetPos()
+		local ang = ent:GetAngles() if ( ent:IsPlayer() ) then ang.p = 0 end
+
+		local p = LocalToWorld( ent:OBBMins(), ang, pos, ang ):ToScreen()
+		local min = ent:OBBMins()
+		draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = LocalToWorld( ent:OBBCenter(), ang, pos, ang ):ToScreen() --ent:LocalToWorld( ent:OBBCenter() ):ToScreen()
+		local cen = ent:OBBCenter()
+		draw.SimpleText( Format( "Center ( %i, %i, %i )", cen.x, cen.y, cen.z ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = LocalToWorld( ent:OBBMaxs(), ang, pos, ang ):ToScreen() -- ent:LocalToWorld( ent:OBBMaxs() ):ToScreen()
+		local max = ent:OBBMaxs()
+		draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+	end
+} )
+AddInfoFunc( {
+	name = "Render Bounds",
+	func = function( ent, labels, dirs )
+		local min, max = ent:GetRenderBounds()
+		cam.Start3D( EyePos(), EyeAngles() )
+			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
+			render.SetMaterial( mat_wireframe )
+			render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
+		cam.End3D()
+
+		if ( !labels ) then return end
+
+		local p = ent:LocalToWorld( min ):ToScreen()
+		draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
+		draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ent:LocalToWorld( max ):ToScreen()
+		draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+	end
+} )
+AddInfoFunc( {
+	name = "Collision Bounds",
+	func = function( ent, labels, dirs )
+		local min, max = ent:GetCollisionBounds()
+		cam.Start3D( EyePos(), EyeAngles() )
+			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
+			render.SetMaterial( mat_wireframe )
+			render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
+		cam.End3D()
+
+		if ( !labels ) then return end
+
+		local p = ent:LocalToWorld( min ):ToScreen()
+		draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
+		draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ent:LocalToWorld( max ):ToScreen()
+		draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+	end
+} )
+AddInfoFunc( {
+	name = "Model Bounds",
+	func = function( ent, labels, dirs )
+		local min, max = ent:GetModelBounds()
+		cam.Start3D( EyePos(), EyeAngles() )
+			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
+			render.SetMaterial( mat_wireframe )
+			render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
+		cam.End3D()
+
+		if ( !labels ) then return end
+
+		local p = ent:LocalToWorld( min ):ToScreen()
+		draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
+		draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ent:LocalToWorld( max ):ToScreen()
+		draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+	end
+} )
+AddInfoFunc( {
+	name = "Model Render Bounds",
+	func = function( ent, labels, dirs )
+		local min, max = ent:GetModelRenderBounds()
+		cam.Start3D( EyePos(), EyeAngles() )
+			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
+			render.SetMaterial( mat_wireframe )
+			render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
+		cam.End3D()
+
+		if ( !labels ) then return end
+
+		local p = ent:LocalToWorld( min ):ToScreen()
+		draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
+		draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ent:LocalToWorld( max ):ToScreen()
+		draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+	end
+} )
+AddInfoFunc( {
+	name = "Velocity",
+	func = function( ent, labels, dirs )
+
+		local vel = ent:GetVelocity()
+		local pos = ent:GetPos()
+		if ( pos == vector_origin ) then pos = ent:LocalToWorld( ent:OBBCenter() ) end
+
+		cam.Start3D( EyePos(), EyeAngles() )
+			local mul = 4
+			render.DrawLine( pos, pos + Vector( vel.x / mul, 0, 0 ), Color( 255, 0, 0 ), false )
+			render.DrawLine( pos, pos + Vector( 0, vel.y / mul, 0 ), Color( 0, 255, 0 ), false )
+			render.DrawLine( pos, pos + Vector( 0, 0, vel.z / mul ), Color( 0, 128, 255 ), false )
+			render.DrawLine( pos, pos + vel / mul, Color( 255, 255, 255 ), false )
+		cam.End3D()
+
+		if ( !labels ) then return end
+
+		local p = ( pos + Vector( vel.x / mul, 0, 0 ) ):ToScreen()
+		draw.SimpleText( math.floor( ConvertToUnit( vel.x, true ) ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ( pos + Vector( 0, vel.y / mul, 0 ) ):ToScreen()
+		draw.SimpleText( math.floor( ConvertToUnit( vel.y, true ) ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ( pos + Vector( 0, 0, vel.z / mul ) ):ToScreen()
+		draw.SimpleText( math.floor( ConvertToUnit( vel.z, true ) ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ( pos + vel / mul ):ToScreen()
+		draw.SimpleText( math.floor( ConvertToUnit( vel:Length(), true ) ), "rb655_attachment", p.x, p.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+	end
+} )
+AddInfoFunc( {
+	name = "Directions",
+	func = function( ent, labels, dirs )
+
+		local ang = ent:GetAngles()
+		local pos = ent:GetPos()
+		if ( pos == vector_origin ) then pos = ent:LocalToWorld( ent:OBBCenter() ) end
+
+		cam.Start3D( EyePos(), EyeAngles() )
+			local mul = 1
+			render.DrawLine( pos, pos + ang:Forward() * 50, Color( 255, 0, 0 ), false )
+			render.DrawLine( pos, pos + ang:Right() * 50, Color( 0, 255, 0 ), false )
+			render.DrawLine( pos, pos + ang:Up() * 50, Color( 0, 128, 255 ), false )
+		cam.End3D()
+
+		if ( !labels ) then return end
+
+		local p = ( pos + ang:Forward() * 51 ):ToScreen()
+		draw.SimpleText( "Forward", "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ( pos + ang:Right() * 51 ):ToScreen()
+		draw.SimpleText( "Right", "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+		local p = ( pos + ang:Up() * 51 ):ToScreen()
+		draw.SimpleText( "Up", "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+	end
+} )
+AddInfoFunc( {
+	name = "World To Local",
+	world = true,
+	func = function( ent, labels, dirs )
+
+		local tr = LocalPlayer():GetEyeTrace()
+		local pos = ent == game.GetWorld() && vector_origin or ent:GetPos()
+		if ( pos == vector_origin && ent != game.GetWorld() ) then pos = ent:LocalToWorld( ent:OBBCenter() ) end
+
+		local pos1 = ent == game.GetWorld() && IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) && LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldPos" ) or ent:LocalToWorld( ent:GetNWVector( "LocalPos" ) )
+		local pos2 = tr.HitPos
+		local pos3 = ent == game.GetWorld() && vector_origin or ent:GetPos()
+
+		local dir = ent == game.GetWorld() && IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) && LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldDir" ) or ent:GetNWVector( "LocalDir" )
+
+		cam.Start3D( EyePos(), EyeAngles() )
+			render.DrawLine( pos, pos1, Color( 255, 255, 255 ), false )
+			render.DrawLine( pos, pos2, Color( 255, 128, 0 ), false )
+			render.DrawLine( pos1, pos2, Color( 0, 128, 255 ), false )
+		cam.End3D()
+
+		if ( labels ) then
+			local p1 = pos1:ToScreen()
+			draw.SimpleText( "Hit Pos", "rb655_attachment", p1.x, p1.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+			draw.SimpleText( math.floor( ConvertToUnit( pos1:Distance( pos3 ) ) ), "rb655_attachment", p1.x, p1.y + 10, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+			local p2 = pos2:ToScreen()
+			draw.SimpleText( "Aim Pos", "rb655_attachment", p2.x, p2.y, Color( 255, 128, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+			draw.SimpleText( math.floor( ConvertToUnit( pos2:Distance( pos3 ) ) ), "rb655_attachment", p2.x, p2.y + 10, Color( 255, 128, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+			local p = {
+				x = ( p1.x + p2.x ) / 2,
+				y = ( p1.y + p2.y ) / 2
+			}
+			draw.SimpleText( "Distance", "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+			draw.SimpleText( math.floor( ConvertToUnit( pos1:Distance( pos2 ) ) ), "rb655_attachment", p.x, p.y + 10, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		end
+
+		if ( dirs ) then
+			cam.Start3D( EyePos(), EyeAngles() )
+				render.DrawLine( pos2, pos2 + tr.HitNormal * 8, Color( 255, 128, 0 ), false )
+				render.DrawLine( pos1, pos1 + dir * 8, Color( 255, 255, 255 ), false )
+			cam.End3D()
+		end
+
+	end
+} )
+AddInfoFunc( {
+	name = "Sequence",
+	func = function( ent, labels, dirs )
+
+		local seqinfo = ent:GetSequenceInfo( ent:GetSequence() )
+
+		cam.Start3D( EyePos(), EyeAngles() )
+			local ang = ent:GetAngles()
+			if ( ent:IsPlayer() ) then ang.p = 0 end
+			render.DrawWireframeBox( ent:GetPos(), ang, seqinfo.bbmin, seqinfo.bbmax, Color( 255, 255, 255 ), true )
+		cam.End3D()
+
+		local textpos = ( ent:GetPos() + Vector( 0, 0, seqinfo.bbmax.z + 10 ) ):ToScreen()
+
+		if ( textpos.visible ) then
+			draw.SimpleText( seqinfo.label, "rb655_attachment", textpos.x, textpos.y - 20, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER )
+			draw.SimpleText( seqinfo.activity .. ": " .. seqinfo.activityname, "rb655_attachment", textpos.x, textpos.y - 4, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER )
+		end
+
+	end
+} )
 
 function TOOL:NextSelecetedFunc( num )
 	local cur = self:GetWeapon():GetNWInt( "rb655_inspector_func", 1 )
@@ -523,7 +546,7 @@ if ( SERVER ) then
 	util.AddNetworkString( "rb655_inspector_physicsinfo" )
 	util.AddNetworkString( "rb655_inspector_reqinfo" )
 
-	net.Receive( "rb655_inspector_reqinfo", function( len, ply )
+	net.Receive( "rb655_inspector_reqinfo", function( msglen, ply )
 		local ent = net.ReadEntity()
 
 		if ( !IsValid( ent:GetPhysicsObject() ) ) then return end
