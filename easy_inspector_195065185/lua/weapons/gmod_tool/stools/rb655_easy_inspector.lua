@@ -8,6 +8,7 @@ TOOL.ClientConVar[ "names" ] = "1"
 TOOL.ClientConVar[ "dir" ] = "1"
 TOOL.ClientConVar[ "hook" ] = "0"
 TOOL.ClientConVar[ "units" ] = "0"
+TOOL.ClientConVar[ "box_dim" ] = "1"
 
 TOOL.Information = {
 	{ name = "info", stage = 1 },
@@ -49,6 +50,48 @@ local function ConvertToUnit( units, speed )
 	end
 
 	return units
+end
+
+local function renderDrawBox( pos, ang, min, max, bWire )
+	mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
+	render.SetMaterial( mat_wireframe )
+
+	if ( bWire ) then
+		render.DrawWireframeBox( pos, ang, min, max, Color( 255, 255, 255 ), true )
+	else
+		render.DrawBox( pos, ang, min, max )
+	end
+end
+
+local function renderBoxDimensions( pos, ang, min, max )
+
+	local p1 = LocalToWorld( min, ang, pos, ang ):ToScreen()
+	draw.SimpleText( Format( "Mins( %.2f, %.2f, %.2f )", min.x, min.y, min.z ), "rb655_attachment", p1.x, p1.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+	local cen = ( min + max ) / 2
+	local p2 = LocalToWorld( cen, ang, pos, ang ):ToScreen()
+	draw.SimpleText( Format( "Center( %.2f, %.2f, %.2f )", cen.x, cen.y, cen.z ), "rb655_attachment", p2.x, p2.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+	local p3 = LocalToWorld( max, ang, pos, ang ):ToScreen()
+	draw.SimpleText( Format( "Maxs( %.2f, %.2f, %.2f )", max.x, max.y, max.z ), "rb655_attachment", p3.x, p3.y, Color( 0, 200, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+	if ( GetConVarNumber( "rb655_easy_inspector_box_dim" ) < 1 ) then return end
+
+	local xSizePos = Vector( max )
+	xSizePos.x = cen.x
+	local p4 = LocalToWorld( xSizePos, ang, pos, ang ):ToScreen()
+	draw.SimpleText( Format( "X = %.2f", max.x - min.x ), "rb655_attachment", p4.x, p4.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+	local ySizePos = Vector( max )
+	ySizePos.y = cen.y
+	local p5 = LocalToWorld( ySizePos, ang, pos, ang ):ToScreen()
+	draw.SimpleText( Format( "Y = %.2f", max.y - min.y ), "rb655_attachment", p5.x, p5.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
+	local zSizePos = Vector( max )
+	zSizePos.z = cen.z
+	local p6 = LocalToWorld( zSizePos, ang, pos, ang ):ToScreen()
+	draw.SimpleText( Format( "Z = %.2f", max.z - min.z ), "rb655_attachment", p6.x, p6.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+
 end
 
 local InfoFuncs = {}
@@ -167,7 +210,7 @@ AddInfoFunc( {
 	-- This is a hacky one..
 	func = function( ent, labels, dirs )
 
-		if ( ent.InspectorMeshes && ( !ent.InspectorMesh || ( ent.InsepctorPhysHash != ent.InsepctorPhysHashCache && gMeshCache[ ent.InsepctorPhysHash ] ) ) ) then
+		if ( ent.InspectorMeshes && ( !ent.InspectorMesh or ( ent.InsepctorPhysHash != ent.InsepctorPhysHashCache && gMeshCache[ ent.InsepctorPhysHash ] ) ) ) then
 			local gMesh = {}
 			local gMeshIDs = {}
 			local i = 0
@@ -191,6 +234,7 @@ AddInfoFunc( {
 
 		mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
 		render.SetMaterial( mat_wireframe )
+
 		-- Certain entities do not rotate their physics boxes
 		local shouldRotate = !( ent:IsNPC() && ent:GetSolid() == SOLID_BBOX ) && !ent:IsPlayer()
 		for i, mesha in pairs( ent.InspectorMesh ) do
@@ -232,7 +276,7 @@ AddInfoFunc( {
 			-- if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetAngles( bonemat:GetAngles() ) else matrix:SetAngles( ent:GetAngles() ) end
 			-- if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetTranslation( bonemat:GetTranslation() ) else matrix:SetTranslation( ent:GetPos() ) end
 			matrix:SetAngles( ent:GetPhysicsObjectNum( i ):GetAngles() )
-			matrix:SetTranslation( ent:GetPhysicsObjectNum( i ):GetPos() ) 
+			matrix:SetTranslation( ent:GetPhysicsObjectNum( i ):GetPos() )
 			cam.PushModelMatrix( matrix )
 
 			local mesh = Mesh()
@@ -282,118 +326,83 @@ AddInfoFunc( {
 AddInfoFunc( {
 	name = "Orientated Bounding Box",
 	func = function( ent, labels, dirs )
+
+		local mins = ent:OBBMins()
+		local maxs = ent:OBBMaxs()
 		local pos = ent:GetPos()
+		local ang = ent:GetAngles()
+		if ( ent:IsPlayer() ) then ang.p = 0 end
+
 		cam.Start3D( EyePos(), EyeAngles() )
-			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-			render.SetMaterial( mat_wireframe )
-			local ang = ent:GetAngles() if ( ent:IsPlayer() ) then ang.p = 0 end
-			render.DrawBox( ent:GetPos(), ang, ent:OBBMins(), ent:OBBMaxs() )
+			renderDrawBox( pos, ang, mins, maxs )
 		cam.End3D()
 
 		if ( !labels ) then return end
-
-		local pos = ent:GetPos()
-		local ang = ent:GetAngles() if ( ent:IsPlayer() ) then ang.p = 0 end
-
-		local p = LocalToWorld( ent:OBBMins(), ang, pos, ang ):ToScreen()
-		local min = ent:OBBMins()
-		draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-		local p = LocalToWorld( ent:OBBCenter(), ang, pos, ang ):ToScreen() --ent:LocalToWorld( ent:OBBCenter() ):ToScreen()
-		local cen = ent:OBBCenter()
-		draw.SimpleText( Format( "Center ( %i, %i, %i )", cen.x, cen.y, cen.z ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-		local p = LocalToWorld( ent:OBBMaxs(), ang, pos, ang ):ToScreen() -- ent:LocalToWorld( ent:OBBMaxs() ):ToScreen()
-		local max = ent:OBBMaxs()
-		draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		renderBoxDimensions( pos, ang, mins, maxs )
 	end
 } )
 AddInfoFunc( {
 	name = "Render Bounds",
 	func = function( ent, labels, dirs )
-		local min, max = ent:GetRenderBounds()
+		local mins, maxs = ent:GetRenderBounds()
+		local pos = ent:GetPos()
+		local ang = ent:GetAngles()
+		if ( ent:IsPlayer() ) then ang.p = 0 end
+
 		cam.Start3D( EyePos(), EyeAngles() )
-			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-			render.SetMaterial( mat_wireframe )
-			render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
+			renderDrawBox( pos, ang, mins, maxs )
 		cam.End3D()
 
 		if ( !labels ) then return end
-
-		local p = ent:LocalToWorld( min ):ToScreen()
-		draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-		local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
-		draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-		local p = ent:LocalToWorld( max ):ToScreen()
-		draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		renderBoxDimensions( pos, ang, mins, maxs )
 	end
 } )
 AddInfoFunc( {
 	name = "Collision Bounds",
 	func = function( ent, labels, dirs )
-		local min, max = ent:GetCollisionBounds()
+		local mins, maxs = ent:GetCollisionBounds()
+		local pos = ent:GetPos()
+		local ang = ent:GetAngles()
+		if ( ent:IsPlayer() ) then ang.p = 0 end
+
 		cam.Start3D( EyePos(), EyeAngles() )
-			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-			render.SetMaterial( mat_wireframe )
-			render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
+			renderDrawBox( pos, ang, mins, maxs )
 		cam.End3D()
 
 		if ( !labels ) then return end
-
-		local p = ent:LocalToWorld( min ):ToScreen()
-		draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-		local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
-		draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-		local p = ent:LocalToWorld( max ):ToScreen()
-		draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		renderBoxDimensions( pos, ang, mins, maxs )
 	end
 } )
 AddInfoFunc( {
 	name = "Model Bounds",
 	func = function( ent, labels, dirs )
-		local min, max = ent:GetModelBounds()
+		local mins, maxs = ent:GetModelBounds()
+		local pos = ent:GetPos()
+		local ang = ent:GetAngles()
+		if ( ent:IsPlayer() ) then ang.p = 0 end
+
 		cam.Start3D( EyePos(), EyeAngles() )
-			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-			render.SetMaterial( mat_wireframe )
-			render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
+			renderDrawBox( pos, ang, mins, maxs )
 		cam.End3D()
 
 		if ( !labels ) then return end
-
-		local p = ent:LocalToWorld( min ):ToScreen()
-		draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-		local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
-		draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-		local p = ent:LocalToWorld( max ):ToScreen()
-		draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		renderBoxDimensions( pos, ang, mins, maxs )
 	end
 } )
 AddInfoFunc( {
 	name = "Model Render Bounds",
 	func = function( ent, labels, dirs )
-		local min, max = ent:GetModelRenderBounds()
+		local mins, maxs = ent:GetModelRenderBounds()
+		local pos = ent:GetPos()
+		local ang = ent:GetAngles()
+		if ( ent:IsPlayer() ) then ang.p = 0 end
+
 		cam.Start3D( EyePos(), EyeAngles() )
-			mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-			render.SetMaterial( mat_wireframe )
-			render.DrawBox( ent:GetPos(), ent:GetAngles(), min, max )
+			renderDrawBox( pos, ang, mins, maxs )
 		cam.End3D()
 
 		if ( !labels ) then return end
-
-		local p = ent:LocalToWorld( min ):ToScreen()
-		draw.SimpleText( Format( "Mins ( %i, %i, %i )", min.x, min.y, min.z ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-		local p = ent:LocalToWorld( ( min + max ) / 2 ):ToScreen()
-		draw.SimpleText( Format( "Center ( %i, %i, %i )", ( min.x + max.x ) / 2, ( min.y + max.y ) / 2, ( min.z + max.z ) / 2 ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-
-		local p = ent:LocalToWorld( max ):ToScreen()
-		draw.SimpleText( Format( "Maxs ( %i, %i, %i )", max.x, max.y, max.z ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		renderBoxDimensions( pos, ang, mins, maxs )
 	end
 } )
 AddInfoFunc( {
@@ -455,6 +464,34 @@ AddInfoFunc( {
 	end
 } )
 AddInfoFunc( {
+	name = "Center of Mass",
+	check = function( ent )
+		if ( !ent.InspectorMassCenter ) then
+			return "Failed to get center of mass!"
+		end
+	end,
+	func = function( ent, labels, dirs )
+
+		local com_pos = ent.InspectorMassCenter or Vector( 0, 0, 0 )
+		local textpos = ent:GetPos() + com_pos
+
+		cam.Start3D( EyePos(), EyeAngles() )
+			local mul = 10
+			local ang = ent:GetAngles()
+			render.DrawLine( textpos, textpos + ang:Forward() * mul, Color( 255, 0, 0 ), false )
+			render.DrawLine( textpos, textpos + ang:Right() * mul, Color( 0, 255, 0 ), false )
+			render.DrawLine( textpos, textpos + ang:Up() * mul, Color( 0, 128, 255 ), false )
+		cam.End3D()
+
+		if ( !labels ) then return end
+		textpos = textpos:ToScreen()
+		if ( textpos.visible ) then
+			draw.SimpleText( "( " .. com_pos.x .. ", " .. com_pos.y .. ", " .. com_pos.z .. " )", "rb655_attachment", textpos.x + 20, textpos.y - 10, Color( 255, 255, 255 ), TEXT_ALIGN_LEFT )
+		end
+
+	end
+} )
+AddInfoFunc( {
 	name = "World To Local",
 	world = true,
 	func = function( ent, labels, dirs )
@@ -511,20 +548,26 @@ AddInfoFunc( {
 	end,
 	func = function( ent, labels, dirs )
 
+		local pos = ent:GetPos()
+		local ang = ent:GetAngles()
+		if ( ent:IsPlayer() ) then ang.p = 0 end
+
 		local seqinfo = ent:GetSequenceInfo( ent:GetSequence() )
+		if ( seqinfo.activityname:len() < 1 ) then seqinfo.activityname = "ACT_INVALID" end
 
 		cam.Start3D( EyePos(), EyeAngles() )
-			local ang = ent:GetAngles()
-			if ( ent:IsPlayer() ) then ang.p = 0 end
-			render.DrawWireframeBox( ent:GetPos(), ang, seqinfo.bbmin, seqinfo.bbmax, Color( 255, 255, 255 ), true )
+			renderDrawBox( pos, ang, seqinfo.bbmin, seqinfo.bbmax, true )
 		cam.End3D()
 
-		local textpos = ( ent:GetPos() + Vector( 0, 0, seqinfo.bbmax.z + 10 ) ):ToScreen()
+		if ( !labels ) then return end
+		local textpos = ( pos + Vector( 0, 0, seqinfo.bbmax.z + 10 ) ):ToScreen()
 
 		if ( textpos.visible ) then
 			draw.SimpleText( seqinfo.label, "rb655_attachment", textpos.x, textpos.y - 20, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER )
-			draw.SimpleText( seqinfo.activity .. ": " .. seqinfo.activityname, "rb655_attachment", textpos.x, textpos.y - 4, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER )
+			draw.SimpleText( seqinfo.activityname .. " (" .. seqinfo.activity .. ")", "rb655_attachment", textpos.x, textpos.y - 4, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER )
 		end
+
+		renderBoxDimensions( pos, ang, seqinfo.bbmin, seqinfo.bbmax )
 
 	end
 } )
@@ -602,16 +645,17 @@ else
 		ent.InspectorMapID = net.ReadInt( 32 )
 		ent.InspectorName = net.ReadString()
 		ent.InspectorMass = net.ReadInt( 32 )
+		ent.InspectorMassCenter = net.ReadVector()
 		ent.InspectorMat = net.ReadString()
 		ent.InsepctorPhysHash = net.ReadString()
 
-		if ( !gMeshCache[ InsepctorPhysHash ] ) then
+		if ( !gMeshCache[ ent.InsepctorPhysHash ] ) then
 			net.Start( "rb655_inspector_reqinfo" )
 				net.WriteEntity( ent )
 			net.SendToServer()
 			ent.InspectorMeshes = nil
 		else
-			ent.InspectorMeshes = gMeshCache[ InsepctorPhysHash ]
+			ent.InspectorMeshes = gMeshCache[ ent.InsepctorPhysHash ]
 		end
 	end )
 
@@ -660,7 +704,8 @@ function TOOL:SendEntityInfo( ent )
 	ent.InspectorMapID = ent.MapCreationID && ent:MapCreationID() or -1
 	ent.InspectorName = ent.GetName && ent:GetName() or ""
 	ent.InspectorMass = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMass() or 0
-	ent.InspectorMat = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMaterial() or ""
+	ent.InspectorMassCenter = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMassCenter() or Vector( 0, 0, 0 )
+	ent.InspectorMat = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMaterial() or "" -- Should use the trace!
 	ent.InsepctorPhysHash = IsValid( ent:GetPhysicsObject() ) && util.CRC( util.TableToJSON( ent:GetPhysicsObject():GetMeshConvexes() ) ) or ""
 
 	net.Start( "rb655_inspector_genericinfo" )
@@ -668,6 +713,7 @@ function TOOL:SendEntityInfo( ent )
 		net.WriteInt( ent.InspectorMapID, 32 )
 		net.WriteString( ent.InspectorName )
 		net.WriteInt( ent.InspectorMass, 32 )
+		net.WriteVector( ent.InspectorMassCenter )
 		net.WriteString( ent.InspectorMat )
 		net.WriteString( ent.InsepctorPhysHash )
 	net.Send( self:GetOwner() )
@@ -718,10 +764,12 @@ function TOOL:Think()
 		local InspectorMapID = ent.MapCreationID && ent:MapCreationID() or -1
 		local InspectorName = ent.GetName && ent:GetName() or ""
 		local InspectorMass = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMass() or 0
+		local InspectorMassCenter = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMassCenter() or Vector( 0, 0, 0 )
 		local InspectorMat = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMaterial() or ""
 		local InsepctorPhysHash = IsValid( ent:GetPhysicsObject() ) && util.CRC( util.TableToJSON( ent:GetPhysicsObject():GetMeshConvexes() ) ) or ""
 
-		if ( ent.InspectorMapID != InspectorMapID or ent.InspectorName != InspectorName or ent.InspectorMass != InspectorMass or ent.InspectorMat != InspectorMat or ent.InsepctorPhysHash != InsepctorPhysHash ) then
+		if ( ent.InspectorMapID != InspectorMapID or ent.InspectorName != InspectorName or ent.InspectorMass != InspectorMass or
+			ent.InspectorMat != InspectorMat or ent.InsepctorPhysHash != InsepctorPhysHash or ent.InspectorMassCenter != InspectorMassCenter ) then
 			self:SendEntityInfo( ent ) -- Updaet eet!
 		end
 
@@ -746,6 +794,7 @@ language.Add( "tool.rb655_easy_inspector.names", "Show labels (where applicable)
 language.Add( "tool.rb655_easy_inspector.dir", "Show bone/attachment directions (where applicable)" )
 language.Add( "tool.rb655_easy_inspector.hook", "Render when tool is holstered" )
 language.Add( "tool.rb655_easy_inspector.units", "Units (Speed units)" )
+language.Add( "tool.rb655_easy_inspector.box_dim", "Show box dimensions" )
 
 language.Add( "unit.units", "Units (units/s)" )
 language.Add( "unit.km", "Kilometres (km/h)" )
@@ -760,6 +809,7 @@ local FIELD_PICKER = 1
 local FIELD_USENULL = 2
 local function TextField( panel, func, tooltip, noent, placeholder )
 	if ( noent == nil ) then noent = FIELD_SELECTONLY end
+
 	local text = vgui.Create( "DTextEntry", panel )
 	text:SetTall( 20 )
 	text:SetPlaceholderText( placeholder or "No entity selected" )
@@ -803,6 +853,7 @@ function TOOL.BuildCPanel( panel, nope )
 	panel:AddControl( "Checkbox", { Label = "#tool.rb655_easy_inspector.names", Command = "rb655_easy_inspector_names" } )
 	panel:AddControl( "Checkbox", { Label = "#tool.rb655_easy_inspector.dir", Command = "rb655_easy_inspector_dir" } )
 	panel:AddControl( "Checkbox", { Label = "#tool.rb655_easy_inspector.hook", Command = "rb655_easy_inspector_hook" } )
+	panel:AddControl( "Checkbox", { Label = "#tool.rb655_easy_inspector.box_dim", Command = "rb655_easy_inspector_box_dim" } )
 
 	panel:AddControl( "ComboBox", { Label = "#tool.rb655_easy_inspector.units", Options = list.Get( "RB_EI_UNITS" ) } )
 
