@@ -191,15 +191,17 @@ AddInfoFunc( {
 
 		mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
 		render.SetMaterial( mat_wireframe )
-		for i, mesh in pairs( ent.InspectorMesh ) do
+		-- Certain entities do not rotate their physics boxes
+		local shouldRotate = !( ent:IsNPC() && ent:GetSolid() == SOLID_BBOX ) && !ent:IsPlayer()
+		for i, mesha in pairs( ent.InspectorMesh ) do
 			local matrix = Matrix()
-			local bonemat = ent:GetBoneMatrix( ent:TranslatePhysBoneToBone( ent.InspectorMeshIDs && ent.InspectorMeshIDs[i] or 0) )
-			if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetAngles( bonemat:GetAngles() ) else matrix:SetAngles( ent:GetAngles() ) end
-			if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetTranslation( bonemat:GetTranslation() ) else matrix:SetTranslation( ent:GetPos() ) end
+			local bonemat = ent:GetBoneMatrix( ent:TranslatePhysBoneToBone( ent.InspectorMeshIDs && ent.InspectorMeshIDs[ i ] or 0 ) )
+			if ( bonemat && shouldRotate ) then matrix:SetAngles( bonemat:GetAngles() ) else matrix:SetAngles( ( ent:GetSolid() == SOLID_BBOX && ent:GetMoveType() != MOVETYPE_VPHYSICS ) && angle_zero or ent:GetAngles() ) end
+			if ( bonemat && shouldRotate ) then matrix:SetTranslation( bonemat:GetTranslation() ) else matrix:SetTranslation( ent:GetPos() ) end
 
 			cam.PushModelMatrix( matrix )
 
-			mesh:Draw()
+			mesha:Draw()
 
 			cam.PopModelMatrix()
 		end
@@ -413,16 +415,16 @@ AddInfoFunc( {
 		if ( !labels ) then return end
 
 		local p = ( pos + Vector( vel.x / mul, 0, 0 ) ):ToScreen()
-		draw.SimpleText( math.floor( ConvertToUnit( vel.x, true ) ), "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		draw.SimpleText( math.floor( ConvertToUnit( vel.x, true ) * 10 ) / 10, "rb655_attachment", p.x, p.y, Color( 255, 0, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
 		local p = ( pos + Vector( 0, vel.y / mul, 0 ) ):ToScreen()
-		draw.SimpleText( math.floor( ConvertToUnit( vel.y, true ) ), "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		draw.SimpleText( math.floor( ConvertToUnit( vel.y, true ) * 10 ) / 10, "rb655_attachment", p.x, p.y, Color( 0, 255, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
 		local p = ( pos + Vector( 0, 0, vel.z / mul ) ):ToScreen()
-		draw.SimpleText( math.floor( ConvertToUnit( vel.z, true ) ), "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		draw.SimpleText( math.floor( ConvertToUnit( vel.z, true ) * 10 ) / 10, "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
 		local p = ( pos + vel / mul ):ToScreen()
-		draw.SimpleText( math.floor( ConvertToUnit( vel:Length(), true ) ), "rb655_attachment", p.x, p.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		draw.SimpleText( math.floor( ConvertToUnit( vel:Length(), true ) * 10 ) / 10, "rb655_attachment", p.x, p.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 	end
 } )
 AddInfoFunc( {
@@ -434,10 +436,10 @@ AddInfoFunc( {
 		if ( pos == vector_origin ) then pos = ent:LocalToWorld( ent:OBBCenter() ) end
 
 		cam.Start3D( EyePos(), EyeAngles() )
-			local mul = 1
-			render.DrawLine( pos, pos + ang:Forward() * 50, Color( 255, 0, 0 ), false )
-			render.DrawLine( pos, pos + ang:Right() * 50, Color( 0, 255, 0 ), false )
-			render.DrawLine( pos, pos + ang:Up() * 50, Color( 0, 128, 255 ), false )
+			local mul = 50
+			render.DrawLine( pos, pos + ang:Forward() * mul, Color( 255, 0, 0 ), false )
+			render.DrawLine( pos, pos + ang:Right() * mul, Color( 0, 255, 0 ), false )
+			render.DrawLine( pos, pos + ang:Up() * mul, Color( 0, 128, 255 ), false )
 		cam.End3D()
 
 		if ( !labels ) then return end
@@ -476,18 +478,18 @@ AddInfoFunc( {
 		if ( labels ) then
 			local p1 = pos1:ToScreen()
 			draw.SimpleText( "Hit Pos", "rb655_attachment", p1.x, p1.y, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-			draw.SimpleText( math.floor( ConvertToUnit( pos1:Distance( pos3 ) ) ), "rb655_attachment", p1.x, p1.y + 10, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+			draw.SimpleText( math.floor( ConvertToUnit( pos1:Distance( pos3 ) ) * 10 ) / 10, "rb655_attachment", p1.x, p1.y + 10, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
 			local p2 = pos2:ToScreen()
 			draw.SimpleText( "Aim Pos", "rb655_attachment", p2.x, p2.y, Color( 255, 128, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-			draw.SimpleText( math.floor( ConvertToUnit( pos2:Distance( pos3 ) ) ), "rb655_attachment", p2.x, p2.y + 10, Color( 255, 128, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+			draw.SimpleText( math.floor( ConvertToUnit( pos2:Distance( pos3 ) ) * 10 ) / 10, "rb655_attachment", p2.x, p2.y + 10, Color( 255, 128, 0 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 
 			local p = {
 				x = ( p1.x + p2.x ) / 2,
 				y = ( p1.y + p2.y ) / 2
 			}
 			draw.SimpleText( "Distance", "rb655_attachment", p.x, p.y, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-			draw.SimpleText( math.floor( ConvertToUnit( pos1:Distance( pos2 ) ) ), "rb655_attachment", p.x, p.y + 10, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+			draw.SimpleText( math.floor( ConvertToUnit( pos1:Distance( pos2 ) ) * 10 ) / 10, "rb655_attachment", p.x, p.y + 10, Color( 0, 128, 255 ), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
 		end
 
 		if ( dirs ) then
@@ -501,6 +503,12 @@ AddInfoFunc( {
 } )
 AddInfoFunc( {
 	name = "Sequence",
+	check = function( ent )
+		local seqinfo = ent:GetSequenceInfo( ent:GetSequence() )
+		if ( !seqinfo ) then
+			return "Entity does not support sequences"
+		end
+	end,
 	func = function( ent, labels, dirs )
 
 		local seqinfo = ent:GetSequenceInfo( ent:GetSequence() )
@@ -523,8 +531,8 @@ AddInfoFunc( {
 
 function TOOL:NextSelecetedFunc( num )
 	local cur = self:GetWeapon():GetNWInt( "rb655_inspector_func", 1 )
-	if ( cur + num > #InfoFuncs ) then cur = 0 end
-	if ( cur + num < 1 ) then cur = #InfoFuncs + 1 end
+	if ( cur + num > table.Count( InfoFuncs ) ) then cur = 0 end
+	if ( cur + num < 1 ) then cur = table.Count( InfoFuncs ) + 1 end
 	self:GetWeapon():SetNWInt( "rb655_inspector_func", cur + num )
 end
 
@@ -975,9 +983,8 @@ function TOOL:DrawToolScreen( sw, sh )
 	local h = 10
 	local lineH = 0
 
-	-- Anybody, a better way?
+	surface.SetFont( "rb655_inspector_menu" )
 	for id, t in pairs( InfoFuncs ) do
-		surface.SetFont( "rb655_inspector_menu" )
 		local tw, th = surface.GetTextSize( t.name )
 		w = math.max( tw + 10, w )
 		h = h + th
