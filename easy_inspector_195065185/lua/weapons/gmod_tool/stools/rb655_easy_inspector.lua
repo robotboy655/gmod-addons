@@ -711,22 +711,27 @@ language.Add( "tool.rb655_easy_inspector.desc", "Shows all available information
 
 language.Add( "tool.rb655_easy_inspector.noglow", "Don't render glow/halo around models" )
 language.Add( "tool.rb655_easy_inspector.lp", "Don't render on yourself in first person" )
-language.Add( "tool.rb655_easy_inspector.names", "Show labels ( where applicable )" )
-language.Add( "tool.rb655_easy_inspector.dir", "Show directions ( where applicable )" )
+language.Add( "tool.rb655_easy_inspector.names", "Show labels (where applicable)" )
+language.Add( "tool.rb655_easy_inspector.dir", "Show bone/attachment directions (where applicable)" )
 language.Add( "tool.rb655_easy_inspector.hook", "Render when tool is holstered" )
-language.Add( "tool.rb655_easy_inspector.units", "Units ( Speed units )" )
+language.Add( "tool.rb655_easy_inspector.units", "Units (Speed units)" )
 
-language.Add( "unit.units", "Units ( units/s )" )
-language.Add( "unit.km", "Kilometres ( km/h )" )
-language.Add( "unit.meter", "Meters ( m/s )" )
-language.Add( "unit.cm", "Centimetres ( cm/s )" )
-language.Add( "unit.miles", "Miles ( mp/h )" )
-language.Add( "unit.inch", "Inches ( inch/s )" )
-language.Add( "unit.foot", "Feet ( foot/s )" )
+language.Add( "unit.units", "Units (units/s)" )
+language.Add( "unit.km", "Kilometres (km/h)" )
+language.Add( "unit.meter", "Meters (m/s)" )
+language.Add( "unit.cm", "Centimetres (cm/s)" )
+language.Add( "unit.miles", "Miles (mi/h)" )
+language.Add( "unit.inch", "Inches (inch/s)" )
+language.Add( "unit.foot", "Feet (foot/s)" )
 
-local function TextField( panel, func, tooltip, noent )
+local FIELD_SELECTONLY = 0
+local FIELD_PICKER = 1
+local FIELD_USENULL = 2
+local function TextField( panel, func, tooltip, noent, placeholder )
+	if ( noent == nil ) then noent = FIELD_SELECTONLY end
 	local text = vgui.Create( "DTextEntry", panel )
 	text:SetTall( 20 )
+	text:SetPlaceholderText( placeholder or "No entity selected" )
 	if ( tooltip ) then text:SetTooltip( tooltip ) end
 	function text:Think()
 		if ( self.icon ) then self.icon:SetPos( self:GetWide() - 17, 2 ) end
@@ -734,7 +739,9 @@ local function TextField( panel, func, tooltip, noent )
 		local tool = LocalPlayer().GetTool && LocalPlayer():GetTool( "rb655_easy_inspector" )
 		if ( !tool or !tool.GetSelectedEntity ) then return end
 		local ent = tool:GetSelectedEntity()
-		if ( IsValid( ent ) or noent ) then func( self, ent ) else self:SetValue( "" ) end
+		if ( !IsValid( ent ) && noent == FIELD_PICKER ) then ent = LocalPlayer():GetEyeTrace().Entity end
+
+		if ( IsValid( ent ) or noent == FIELD_USENULL ) then func( self, ent ) else self:SetValue( "" ) end
 	end
 
 	local icon = vgui.Create( "DImageButton", text )
@@ -759,7 +766,7 @@ list.Set( "RB_EI_UNITS", "#unit.miles", { rb655_easy_inspector_units = 4 } )
 list.Set( "RB_EI_UNITS", "#unit.inch", { rb655_easy_inspector_units = 5 } )
 list.Set( "RB_EI_UNITS", "#unit.foot", { rb655_easy_inspector_units = 6 } )
 
-function TOOL.BuildCPanel( panel, ent )
+function TOOL.BuildCPanel( panel, nope )
 	panel:AddControl( "Checkbox", { Label = "#tool.rb655_easy_inspector.noglow", Command = "rb655_easy_inspector_noglow" } )
 	panel:AddControl( "Checkbox", { Label = "#tool.rb655_easy_inspector.lp", Command = "rb655_easy_inspector_lp" } )
 	panel:AddControl( "Checkbox", { Label = "#tool.rb655_easy_inspector.names", Command = "rb655_easy_inspector_names" } )
@@ -768,77 +775,92 @@ function TOOL.BuildCPanel( panel, ent )
 
 	panel:AddControl( "ComboBox", { Label = "#tool.rb655_easy_inspector.units", Options = list.Get( "RB_EI_UNITS" ) } )
 
+	-- TODO: Maybe most of these one liners could go onto separate inspect mode, like ent_text?
+	-- TODO: Entity flags?
 	TextField( panel, function( self, ent )
 		if ( !IsValid( ent ) ) then self:SetValue( "[" .. game.GetWorld():EntIndex() .. " | -1] " .. game.GetWorld():GetClass() ) return end
 		self:SetValue( "[" .. ent:EntIndex() .. " | " .. (ent.InspectorMapID or -1) .. "] " .. ent:GetClass() )
-	end, "[EntIndex | MapCreationID] Entity class", true )
+	end, "[EntIndex | MapCreationID] Entity class", FIELD_USENULL )
 
 	TextField( panel, function( self, ent )
 		if ( !IsValid( ent ) ) then self:SetValue( game.GetWorld():GetModel() ) return end
 		self:SetValue( ent:GetModel() )
-	end, "Entity model", true )
+	end, "Entity model", FIELD_USENULL )
 
 	TextField( panel, function( self, ent )
 		if ( !IsValid( ent ) ) then self:SetValue( LocalPlayer():GetEyeTrace().HitTexture ) return end
 		self:SetValue( ent:GetMaterial() )
-	end, "Entity material\nOr hit texture", true )
+	end, "Entity material\nOr hit texture", FIELD_USENULL, "No material override" )
 
 	TextField( panel, function( self, ent )
 		local pos = ent:GetPos()
 		self:SetValue( "Vector( " .. math.floor( pos.x * 100 ) / 100 .. ", " .. math.floor( pos.y * 100 ) / 100 .. ", " .. math.floor( pos.z * 100 ) / 100 .. " )" )
-	end, "Entity position" )
+	end, "Entity position", FIELD_PICKER )
 
 	TextField( panel, function( self, ent )
 		local ang = ent:GetAngles()
 		self:SetValue( "Angle( " .. math.floor( ang.p * 100 ) / 100 .. ", " .. math.floor( ang.y * 100 ) / 100 .. ", " .. math.floor( ang.r * 100 ) / 100 .. " )" )
-	end, "Entity angles" )
+	end, "Entity angles", FIELD_PICKER )
 
 	TextField( panel, function( self, ent )
 		local c = ent:GetColor()
 		self:SetValue( "Color( " .. c.r .. ", " .. c.g .. ", " .. c.b .. ", " .. c.a .. " )" )
-	end, "Entity color" )
+	end, "Entity color", FIELD_PICKER )
 
 	TextField( panel, function( self, ent )
 		local pos = !IsValid( ent ) && IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) && LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldPos" ) or ent:GetNWVector( "LocalPos" )
 		self:SetValue( "Vector( " .. math.floor( pos.x * 100 ) / 100 .. ", " .. math.floor( pos.y * 100 ) / 100 .. ", " .. math.floor( pos.z * 100 ) / 100 .. " )" )
-	end, "Entity:WorldToLocal result of last clicked position on the entity", true )
+	end, "Entity:WorldToLocal result of last clicked position on the entity", FIELD_USENULL )
 
 	TextField( panel, function( self, ent )
 		local ang = !IsValid( ent ) && IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) && LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldDir" ):Angle() or ent:GetNWVector( "LocalDir" ):Angle()
 		self:SetValue( "Angle( " .. math.floor( ang.p * 100 ) / 100 .. ", " .. math.floor( ang.y * 100 ) / 100 .. ", " .. math.floor( ang.r * 100 ) / 100 .. " )" )
-	end, "Hit direction of last clicked position on the entity", true )
+	end, "Hit direction of last clicked position on the entity", FIELD_USENULL )
 
 	TextField( panel, function( self, ent )
 		local pos = LocalPlayer():GetEyeTrace().HitPos
 		if ( IsValid( ent ) ) then pos = ent:WorldToLocal( pos ) end
 		self:SetValue( "Vector( " .. math.floor( pos.x * 100 ) / 100 .. ", " .. math.floor( pos.y * 100 ) / 100 .. ", " .. math.floor( pos.z * 100 ) / 100 .. " )" )
-	end, "Entity:WorldToLocal result of position you are looking at\nOr simply aim position", true )
+	end, "Entity:WorldToLocal result of position you are looking at\nOr simply aim position", FIELD_USENULL )
 
 	TextField( panel, function( self, ent )
 		local ang = LocalPlayer():GetEyeTrace().HitNormal:Angle()
 		self:SetValue( "Angle( " .. math.floor( ang.p * 100 ) / 100 .. ", " .. math.floor( ang.y * 100 ) / 100 .. ", " .. math.floor( ang.r * 100 ) / 100 .. " )" )
-	end, "Direction of position you are looking at", true )
+	end, "Direction of position you are looking at", FIELD_USENULL )
+
+	local SOLID_ = { "SOLID_BSP", "SOLID_BBOX", "SOLID_OBB", "SOLID_OBB_YAW", "SOLID_CUSTOM", "SOLID_VPHYSICS" }
+	SOLID_[ "SOLID_NONE" ] = 0 -- Looah
+	local MOVETYPE_ = { "MOVETYPE_ISOMETRIC", "MOVETYPE_WALK", "MOVETYPE_STEP", "MOVETYPE_FLY", "MOVETYPE_FLYGRAVITY", "MOVETYPE_VPHYSICS", "MOVETYPE_PUSH", "MOVETYPE_NOCLIP", "MOVETYPE_LADDER", "MOVETYPE_OBSERVER", "MOVETYPE_CUSTOM" }
+	MOVETYPE_[ "MOVETYPE_NONE" ] = 0 -- L.U.A.
+
+	TextField( panel, function( self, ent )
+		self:SetValue( "ent:SetSolid( " .. ( SOLID_[ ent:GetSolid() ] or ent:GetSolid() or "?" ) .. " )" )
+	end, "Entity Solid type", FIELD_PICKER )
+
+	TextField( panel, function( self, ent )
+		self:SetValue( "ent:SetMoveType( " .. ( MOVETYPE_[ ent:GetMoveType() ] or ent:GetMoveType() or "?" ) .. " )" )
+	end, "Entity Move type", FIELD_PICKER )
 
 	TextField( panel, function( self, ent )
 		if ( !ent:GetSkin() ) then self:SetValue( "" ) return end
 		self:SetValue( "ent:SetSkin( " .. ent:GetSkin() .. " )" )
-	end, "Entity skin" )
+	end, "Entity skin", FIELD_PICKER, "Failed to get mass (Select an entity?)" )
 
 	TextField( panel, function( self, ent )
 		self:SetValue( ent.InspectorMass or "" )
-	end, "Entity mass" )
+	end, "Entity mass", FIELD_SELECTONLY, "Failed to get mass (Select an entity?)" )
 
 	TextField( panel, function( self, ent )
 		self:SetValue( ent.InspectorName or "" )
-	end, "Entity target name" )
+	end, "Entity target name", FIELD_SELECTONLY, "No target name" )
 
 	TextField( panel, function( self, ent )
 		if ( !IsValid( ent ) ) then
-			local tr = LocalPlayer():GetEyeTrace()
+			local tr = LocalPlayer():GetEyeTrace() -- this should ALSO go through the server
 			self:SetValue( util.GetSurfacePropName( tr.SurfaceProps ) .. " ( " .. tr.SurfaceProps .. ", " .. tostring( tr.MatType ) .. " )" )
 		return end
 		self:SetValue( ent.InspectorMat or "" )
-	end, "Entity physical material\nOr physical material of whatever you are looking at ( Surface property ID, Material Type )", true )
+	end, "Entity physical material\nOr physical material of whatever you are looking at ( Surface property ID, Material Type )", FIELD_USENULL )
 
 	local lastUpdate = 0
 	TextField( panel, function( self, ent )
@@ -865,7 +887,7 @@ function TOOL.BuildCPanel( panel, ent )
 		surface.SetFont( self:GetFont() )
 		local w, h = surface.GetTextSize( "a" ) -- Get height of 1 character
 		self:SetHeight( math.max( ( h + 1 ) * #string.Explode( "\n", str ) + 3, 20 ) )
-	end, "Entity bodygroups: name ( id ) - value ( max value )", true )
+	end, "Entity bodygroups: name ( id ) - value ( max value )", FIELD_USENULL, "No bodygroups" )
 
 	local lastUpdate2 = 0
 	TextField( panel, function( self, ent )
@@ -890,7 +912,7 @@ function TOOL.BuildCPanel( panel, ent )
 		surface.SetFont( self:GetFont() )
 		local w, h = surface.GetTextSize( "a" ) -- Get height of 1 character
 		self:SetHeight( math.max( ( h + 1 ) * #string.Explode( "\n", str ) + 3, 20 ) )
-	end, "Entity poseparameters - name: value ( min, max )", true )
+	end, "Entity poseparameters - name: value ( min, max )", FIELD_USENULL, "No pose parameters" )
 
 	local lastUpdate3 = 0
 	local lastEntity = NULL
@@ -915,7 +937,7 @@ function TOOL.BuildCPanel( panel, ent )
 		surface.SetFont( self:GetFont() )
 		local w, h = surface.GetTextSize( "a" ) -- Get height of 1 character
 		self:SetHeight( math.max( ( h + 1 ) * #string.Explode( "\n", str ) + 3, 20 ) )
-	end, "Entity sub materials - [id] path", true )
+	end, "Entity sub materials - [id] path", FIELD_USENULL )
 
 end
 
