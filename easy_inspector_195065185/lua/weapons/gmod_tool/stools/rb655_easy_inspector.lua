@@ -1029,6 +1029,8 @@ surface.CreateFont( "rb655_inspector_menu", {
 	antialias = true
 } )
 
+TOOL.UILastSelected = 0
+TOOL.UILastSelectChanged = 0
 function TOOL:DrawToolScreen( sw, sh )
 	local w = 10
 	local h = 10
@@ -1047,14 +1049,21 @@ function TOOL:DrawToolScreen( sw, sh )
 
 	draw.RoundedBox( 4, 0, 0, sw, sh, Color( 0, 0, 0, 255 ) )
 
+	-- Always start the animation from when we change the inspector
+	if ( self.UILastSelected != self:GetSelectedFunc() ) then
+		self.UILastSelected = self:GetSelectedFunc()
+		self.UILastSelectChanged = CurTime()
+	end
+
 	for id, t in pairs( InfoFuncs ) do
 		if ( id == self:GetSelectedFunc() ) then
 			local clr = HSVToColor( 0, 0, 0.4 + math.sin( CurTime() * 4 ) * 0.1 )
 			draw.RoundedBox( 0, 0, y + 5 + ( id - 1 ) * lineH, sw, lineH, clr )
 
-			local a = surface.GetTextSize( t.name )
-			if ( a > ( sw - 10 ) ) then
-				x = -a + math.fmod( CurTime() * sw, sw + a )
+			local tW = surface.GetTextSize( t.name )
+			if ( tW > ( sw - 10 ) ) then
+				-- Slide the text from sw to -tW
+				x = sw - ( ( ( CurTime() - self.UILastSelectChanged ) * tW / 2 ) + sw - 5 ) % ( tW + sw )
 			end
 		else
 			x = 0
@@ -1066,8 +1075,13 @@ end
 hook.Add( "HUDPaint", "rb655_easy_inspector", function()
 	if ( GetConVarNumber( "rb655_easy_inspector_hook" ) < 1 or !LocalPlayer().GetTool ) then return end
 
+	-- Don't draw the stuff twice
+	local actwep = LocalPlayer():GetActiveWeapon()
+	if ( IsValid( actwep ) && actwep:GetClass() == "gmod_tool" ) then return end
+
 	local wep = LocalPlayer():GetTool( "rb655_easy_inspector" )
 	if ( !wep ) then return end
+
 	wep:DrawHUD( true )
 end )
 
@@ -1104,7 +1118,8 @@ function TOOL:DrawHUD( b )
 		end*/
 		InfoFuncs[ self:GetSelectedFunc() ].func( game.GetWorld(), tobool( self:GetClientNumber( "names" ) ), tobool( self:GetClientNumber( "dir" ) ) )
 
-	return end
+		return
+	end
 
 	if ( !tobool( self:GetClientNumber( "noglow" ) ) ) then
 		local t = {}
