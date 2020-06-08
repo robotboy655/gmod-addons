@@ -232,7 +232,7 @@ AddInfoFunc( {
 AddInfoFunc( {
 	name = "Physics Box",
 	check = function( ent )
-		if ( !ent.InspectorMeshes ) then
+		if ( !ent.InspectorMeshes or table.IsEmpty( ent.InspectorMeshes ) ) then
 			return "Entity doesn't have any physics objects! Or we failed to get it."
 		end
 	end,
@@ -633,7 +633,7 @@ if ( SERVER ) then
 
 		local data = { data = {}, model = ent:GetModel(), class = ent:GetClass(), entid = ent:EntIndex() }
 		for i = 0, ent:GetPhysicsObjectCount() - 1 do
-			data.data[ i ] = ent:GetPhysicsObjectNum( i ):GetMeshConvexes() or {}
+			data.data[ i ] = ent:GetPhysicsObjectNum( i ):GetMeshConvexes()
 		end
 
 		data = util.TableToJSON( data )
@@ -658,7 +658,8 @@ if ( SERVER ) then
 				net.WriteData( compressed_data:sub( start + 1, endbyte + 1 ), size )
 
 				if ( i == parts ) then
-					net.WriteString( util.CRC( util.TableToJSON( ent:GetPhysicsObject():GetMeshConvexes() ) ) )
+					local convexes = ent:GetPhysicsObject():GetMeshConvexes()
+					net.WriteString( convexes && util.CRC( util.TableToJSON( convexes ) ) or "" )
 				end
 			net.Send( ply )
 
@@ -730,12 +731,13 @@ function TOOL:SendEntityInfo( ent )
 	if ( !IsValid( ent ) or CLIENT ) then return end
 
 	-- Save the set values for later use
+	local physObj = ent:GetPhysicsObject()
 	ent.InspectorMapID = ent.MapCreationID && ent:MapCreationID() or -1
 	ent.InspectorName = ent.GetName && ent:GetName() or ""
-	ent.InspectorMass = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMass() or 0
-	ent.InspectorMassCenter = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMassCenter() or Vector( 0, 0, 0 )
-	ent.InspectorMat = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMaterial() or "" -- Should use the trace!
-	ent.InsepctorPhysHash = IsValid( ent:GetPhysicsObject() ) && util.CRC( util.TableToJSON( ent:GetPhysicsObject():GetMeshConvexes() ) ) or ""
+	ent.InspectorMass = IsValid( physObj ) && physObj:GetMass() or 0
+	ent.InspectorMassCenter = IsValid( physObj ) && physObj:GetMassCenter() or Vector( 0, 0, 0 )
+	ent.InspectorMat = IsValid( physObj ) && physObj:GetMaterial() or "" -- Should use the trace!
+	ent.InsepctorPhysHash = ( IsValid( physObj ) && physObj:GetMeshConvexes() ) && util.CRC( util.TableToJSON( physObj:GetMeshConvexes() ) ) or ""
 
 	net.Start( "rb655_inspector_genericinfo" )
 		net.WriteEntity( ent )
@@ -790,19 +792,20 @@ function TOOL:Think()
 	if ( CLIENT or !IsValid( ent ) ) then return end
 
 	if ( ( self.InspectorNextCheck or 0 ) < CurTime() ) then
+		self.InspectorNextCheck = CurTime() + 1
+
+		local physObj = ent:GetPhysicsObject()
 		local InspectorMapID = ent.MapCreationID && ent:MapCreationID() or -1
 		local InspectorName = ent.GetName && ent:GetName() or ""
-		local InspectorMass = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMass() or 0
-		local InspectorMassCenter = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMassCenter() or Vector( 0, 0, 0 )
-		local InspectorMat = IsValid( ent:GetPhysicsObject() ) && ent:GetPhysicsObject():GetMaterial() or ""
-		local InsepctorPhysHash = IsValid( ent:GetPhysicsObject() ) && util.CRC( util.TableToJSON( ent:GetPhysicsObject():GetMeshConvexes() ) ) or ""
+		local InspectorMass = IsValid( physObj ) && physObj:GetMass() or 0
+		local InspectorMassCenter = IsValid( physObj ) && physObj:GetMassCenter() or Vector( 0, 0, 0 )
+		local InspectorMat = IsValid( physObj ) && physObj:GetMaterial() or ""
+		local InsepctorPhysHash = ( IsValid( physObj ) && physObj:GetMeshConvexes() ) && util.CRC( util.TableToJSON( physObj:GetMeshConvexes() ) ) or ""
 
 		if ( ent.InspectorMapID != InspectorMapID or ent.InspectorName != InspectorName or ent.InspectorMass != InspectorMass or
 			ent.InspectorMat != InspectorMat or ent.InsepctorPhysHash != InsepctorPhysHash or ent.InspectorMassCenter != InspectorMassCenter ) then
 			self:SendEntityInfo( ent ) -- Updaet eet!
 		end
-
-		self.InspectorNextCheck = CurTime() + 1
 	end
 end
 
