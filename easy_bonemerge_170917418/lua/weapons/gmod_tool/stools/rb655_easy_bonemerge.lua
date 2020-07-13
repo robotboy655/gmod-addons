@@ -520,13 +520,14 @@ function TOOL:DrawHUD()
 	if ( !IsValid( target ) ) then return end
 	if ( target:GetModel():StartWith( "*" ) ) then return end
 
-	local bones = {} --__INVALIDBONE__
+	local bones = {}
 	for id = 0, ent:GetBoneCount() - 1 do table.insert( bones, ent:GetBoneName( id ) ) end
 
 	if ( target:GetBoneCount() ) then
 		for id = 0, target:GetBoneCount() - 1 do
-			if ( table.HasValue( bones, target:GetBoneName( id ) ) ) then
+			if ( table.HasValue( bones, target:GetBoneName( id ) ) && target:GetBoneName( id ) != "__INVALIDBONE__" ) then
 				hasBones = true
+				break
 			end
 		end
 	end
