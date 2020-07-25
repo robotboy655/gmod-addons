@@ -8,7 +8,7 @@ properties.Add( "rb655_make_animatable", {
 	Filter = function( self, ent, ply )
 		if ( !IsValid( ent ) or !gamemode.Call( "CanProperty", ply, "rb655_make_animatable", ent ) ) then return false end
 		if ( ent:GetClass() == "prop_animatable" ) then return false end
-		if ( ent:IsPlayer() || !ent:GetModel() || ent:GetModel():StartWith( "*" ) ) then return false end
+		if ( ent:IsPlayer() or !ent:GetModel() or ent:GetModel():StartWith( "*" ) ) then return false end
 		--if ( string.find( ent:GetClass(), "prop_physics" ) or string.find( ent:GetClass(), "prop_ragdoll" ) ) then return true end
 		return true
 	end,
@@ -27,21 +27,41 @@ properties.Add( "rb655_make_animatable", {
 			ent = ent.AttachedEntity
 		end
 
+		local ragPos = ent:GetPos()
+
+		-- Try to not make entity fly
+		if ( ent:IsRagdoll() ) then
+			for i = 0, ent:GetPhysicsObjectCount() - 1 do
+				local bone = ent:GetPhysicsObjectNum( i )
+				if ( IsValid( bone ) ) then
+					local pos = bone:GetPos()
+
+					-- Yes I like my pyramids
+					if ( pos.z < ragPos.z ) then
+						ragPos.z = pos.z
+					end
+				end
+			end
+		end
+
 		local prop_animatable = ents.Create( "prop_animatable" )
 		prop_animatable:SetModel( ent:GetModel() )
-		prop_animatable:SetPos( ent:GetPos() )
+		prop_animatable:SetPos( ragPos )
 		prop_animatable:SetAngles( ent:GetAngles() )
+		prop_animatable:SetSequence( ent:GetSequence() )
+		prop_animatable:SetCycle( ent:GetCycle() )
+		--prop_animatable:SetPlaybackRate( ent:GetPlaybackRate() )
 
 		prop_animatable:SetSkin( ent:GetSkin() or 0 )
 		prop_animatable:SetFlexScale( ent:GetFlexScale() )
 		for i = 0, ent:GetFlexNum() - 1 do prop_animatable:SetFlexWeight( i, ent:GetFlexWeight( i ) ) end
 		for i = 0, ( ent:GetNumBodyGroups() or 0 ) - 1 do prop_animatable:SetBodygroup( i, ent:GetBodygroup( i ) ) end
-		-- for i = 0, ent:GetNumPoseParameters() - 1 do prop_animatable:SetPoseParameter( i, ent:GetPoseParameter( i ) ) end
+		for i = 0, ent:GetNumPoseParameters() - 1 do prop_animatable:SetPoseParameter( ent:GetPoseParameterName( i ) , ent:GetPoseParameter( i ) ) end
 		for i = 0, ent:GetBoneCount() do
 			prop_animatable:ManipulateBoneScale( i, ent:GetManipulateBoneScale( i ) )
 			prop_animatable:ManipulateBoneAngles( i, ent:GetManipulateBoneAngles( i ) )
 			prop_animatable:ManipulateBonePosition( i, ent:GetManipulateBonePosition( i ) )
-			prop_animatable:ManipulateBoneJiggle( i, ent:GetManipulateBoneJiggle( i ) ) -- Even though we don't know what this does, I am still putting this here.
+			prop_animatable:ManipulateBoneJiggle( i, ent:GetManipulateBoneJiggle( i ) )
 		end
 		-- prop_animatable:InvalidateBoneCache()
 
@@ -86,45 +106,68 @@ properties.Add( "rb655_make_ragdoll", {
 
 		if ( !IsValid( ply ) or !IsValid( ent ) or !self:Filter( ent, ply ) ) then return false end
 
-		local ragdoll = ents.Create( "prop_ragdoll" )
-		ragdoll:SetModel( ent:GetModel() )
-		ragdoll:SetPos( ent:GetPos() )
-		ragdoll:SetAngles( ent:GetAngles() )
-
-		ragdoll:SetSkin( ent:GetSkin() )
-		ragdoll:SetFlexScale( ent:GetFlexScale() )
-		for i = 0, ent:GetNumBodyGroups() - 1 do ragdoll:SetBodygroup( i, ent:GetBodygroup( i ) ) end
-		for i = 0, ent:GetFlexNum() - 1 do ragdoll:SetFlexWeight( i, ent:GetFlexWeight( i ) ) end
-		for i = 0, ent:GetBoneCount() do
-			ragdoll:ManipulateBoneScale( i, ent:GetManipulateBoneScale( i ) )
-			ragdoll:ManipulateBoneAngles( i, ent:GetManipulateBoneAngles( i ) )
-			ragdoll:ManipulateBonePosition( i, ent:GetManipulateBonePosition( i ) )
-			ragdoll:ManipulateBoneJiggle( i, ent:GetManipulateBoneJiggle( i ) ) -- Even though we don't know what this does, I am still putting this here.
-		end
-
-		ragdoll:Spawn()
-		ragdoll:Activate()
-
-		ragdoll.EntityMods = ent.EntityMods
-		ragdoll.BoneMods = ent.BoneMods
-		duplicator.ApplyEntityModifiers( nil, ragdoll )
-		duplicator.ApplyBoneModifiers( nil, ragdoll )
-
-		for i = 0, ragdoll:GetPhysicsObjectCount() - 1 do
-			local bone = ragdoll:GetPhysicsObjectNum( i )
-			if ( IsValid( bone ) ) then
-				local pos, ang = ent:GetBonePosition( ragdoll:TranslatePhysBoneToBone( i ) )
-				if ( pos ) then bone:SetPos( pos ) end
-				if ( ang ) then bone:SetAngles( ang ) end
-
-				bone:EnableMotion( false )
-			end
-		end
-
-		undo.ReplaceEntity( ent, ragdoll )
-		cleanup.ReplaceEntity( ent, ragdoll )
-
-		constraint.RemoveAll( ent ) -- Remove all constraints ( this stops ropes from hanging around )
-		ent:Remove()
+		ent:BecomeRagdollLua()
 	end
+} )
+
+local function MakeDTVarToggleProperty( class, tab )
+
+	local origTab = {
+		Type = "toggle",
+
+		Filter = function( self, ent, ply )
+
+			if ( !IsValid( ent ) ) then return false end
+			if ( !gamemode.Call( "CanProperty", ply, class, ent ) ) then return false end
+
+			if ( self.ClassRestrict && ent:GetClass() != self.ClassRestrict ) then return false end
+
+			return true
+
+		end,
+
+		Checked = function( self, ent, ply )
+
+			return ent[ "Get" .. self.DTVariable ]( ent )
+
+		end,
+
+		Action = function( self, ent )
+
+			self:MsgStart()
+				net.WriteEntity( ent )
+			self:MsgEnd()
+
+		end,
+
+		Receive = function( self, length, ply )
+
+			local ent = net.ReadEntity()
+			if ( !properties.CanBeTargeted( ent, ply ) ) then return end
+			if ( !self:Filter( ent, ply ) ) then return end
+
+			ent[ "Set" .. self.DTVariable ]( ent, !ent[ "Get" .. self.DTVariable ]( ent ) )
+
+		end
+
+	}
+
+	properties.Add( class, table.Merge( origTab, tab ) )
+
+end
+
+MakeDTVarToggleProperty( "rb655_animatable_body_xy", {
+	MenuLabel = "#tool.rb655_easy_animation.property_bodyxy",
+	Order = 600,
+
+	ClassRestrict = "prop_animatable",
+	DTVariable = "AnimateBodyXY"
+} )
+
+MakeDTVarToggleProperty( "rb655_animatable_ragdoll_on_dmg", {
+	MenuLabel = "#tool.rb655_easy_animation.property_damageragdoll",
+	Order = 601,
+
+	ClassRestrict = "prop_animatable",
+	DTVariable = "BecomeRagdoll"
 } )

@@ -153,14 +153,24 @@ if ( SERVER ) then
 	concommand.Add( "rb655_easy_animation_anim_do", function( ply, cmd, args )
 		local tool = ply:GetTool( "rb655_easy_animation" )
 		if ( !tool ) then return end
-		local ent = tool:GetSelecetedEntity()
 
+		local ent = tool:GetSelecetedEntity()
 		if ( !IsEntValid( ent ) ) then return end
 
 		for i = 0, UniqueID do timer.Remove( "rb655_animation_loop_" .. ply:UniqueID() .. "-" .. i ) UniqueID = 0 end
 		timer.Remove( "rb655_animation_loop_preview" .. ply:UniqueID() )
 
-		PlayAnimation( ply, ent, args[ 1 ], ply:GetTool( "rb655_easy_animation" ):GetClientInfo( "speed" ), 0, ply:GetTool():GetClientInfo( "loop" ), true )
+		PlayAnimation( ply, ent, args[ 1 ] or "", ply:GetTool( "rb655_easy_animation" ):GetClientInfo( "speed" ), 0, ply:GetTool():GetClientInfo( "loop" ), true )
+	end )
+
+	concommand.Add( "rb655_easy_animation_set_pp", function( ply, cmd, args )
+		local tool = ply:GetTool( "rb655_easy_animation" )
+		if ( !tool ) then return end
+
+		local ent = tool:GetSelecetedEntity()
+		if ( !IsEntValid( ent ) ) then return end
+
+		ent:SetPoseParameter( ent:GetPoseParameterName( math.floor( tonumber( args[ 1 ] ) ) ), tonumber( args[ 2 ] ) )
 	end )
 
 	concommand.Add( "rb655_easy_animation_add", function( ply, cmd, args )
@@ -219,6 +229,8 @@ language.Add( "tool.rb655_easy_animation.loop", "Loop Animation" )
 language.Add( "tool.rb655_easy_animation.loop.help", "Play animation again when it ends." )
 language.Add( "tool.rb655_easy_animation.nohide", "Do not filter animations" )
 language.Add( "tool.rb655_easy_animation.nohide.help", "Enabling this option will show you the full list of animations available for selected entity. Please note, that this list can be so long, that GMod may freeze for a few seconds." )
+language.Add( "tool.rb655_easy_animation.poseparam.help", "The sliders above are the Pose Parameters. They affect how certain animations look, for example the direction for Team Fortress 2 run animations, etc." )
+language.Add( "tool.rb655_easy_animation.poseparam.badent", "Changing Pose Parameters is only supported on Animatable props!" )
 
 language.Add( "tool.rb655_easy_animation.ai", "NPC is selected, but NPC thinking is not disabled!" )
 language.Add( "tool.rb655_easy_animation.ragdoll", "Ragdolls cannot be animated! Open context menu (Hold C) > right click on ragdoll > Make Animatable" )
@@ -230,6 +242,8 @@ language.Add( "tool.rb655_easy_animation.noglow", "Don't render glow/halo around
 language.Add( "tool.rb655_easy_animation.noglow.help", "Don't render glow/halo around models when they are selected, and don't draw bounding boxes below animated models. Bounding boxes are a helper for when animations make the ragdolls go outside of their bounding box making them unselectable.\n" )
 
 language.Add( "tool.rb655_easy_animation.property", "Make Animatable" )
+language.Add( "tool.rb655_easy_animation.property_bodyxy", "Animate Movement Pose Parameters" )
+language.Add( "tool.rb655_easy_animation.property_damageragdoll", "Ragdoll/Gib on Damage" )
 language.Add( "tool.rb655_easy_animation.property_ragdoll", "Make Ragdoll" )
 language.Add( "prop_animatable", "Animatable Entity" )
 
@@ -320,6 +334,31 @@ function TOOL.BuildCPanel( panel, ent )
 		end
 	elseif ( !IsEntValid( ent ) ) then
 		panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.badent" } )
+	end
+
+	if ( IsValid( ent ) && ent:GetClass() == "prop_animatable" ) then
+		for k = 0, ent:GetNumPoseParameters() - 1 do
+			local min, max = ent:GetPoseParameterRange( k )
+			local name = ent:GetPoseParameterName( k )
+
+			local ctrl = panel:NumSlider( name, nil, min, max, 2 )
+			ctrl:SetHeight( 11 ) -- This makes the controls all bunched up like how we want
+			ctrl:DockPadding( 0, -6, 0, -4 ) -- Try to make the lower part of the text visible
+			ctrl:SetValue( math.Remap( ent:GetPoseParameter( name ), 0, 1, min, max ) )
+
+			ctrl.OnValueChanged = function( self, value )
+				RunConsoleCommand( "rb655_easy_animation_set_pp", k, value )
+
+				--ent:SetPoseParameter( ent:GetPoseParameterName( k ), math.Remap( value, min, max, 0, 1 ) )
+				ent:SetPoseParameter( ent:GetPoseParameterName( k ), value )
+			end
+		end
+
+		if ( ent:GetNumPoseParameters() > 0 ) then
+			panel:ControlHelp( "#tool.rb655_easy_animation.poseparam.help" ):DockMargin( 32, 8, 32, 8 )
+		end
+	elseif ( IsValid( ent ) && ent:GetClass() != "prop_animatable" && ent:GetNumPoseParameters() > 0 ) then
+		panel:ControlHelp( "#tool.rb655_easy_animation.poseparam.badent" ):DockMargin( 32, 8, 32, 8 )
 	end
 
 	local pnl = vgui.Create( "DPanelList" )
