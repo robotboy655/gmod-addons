@@ -11,8 +11,10 @@ TOOL.ClientConVar[ "speed" ] = "1.0"
 TOOL.ClientConVar[ "delay" ] = "0"
 TOOL.ClientConVar[ "nohide" ] = "0"
 TOOL.ClientConVar[ "loop" ] = "0"
-
 TOOL.ClientConVar[ "noglow" ] = "0"
+
+TOOL.ServerConVar[ "nobbox_sv" ] = "0"
+CreateConVar( "rb655_easy_animation_nobbox_sv", "0", FCVAR_ARCHIVE )
 
 local function MakeNiceName( str )
 	local newname = {}

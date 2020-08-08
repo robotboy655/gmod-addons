@@ -12,6 +12,7 @@ function ENT:SetupDataTables()
 	self:NetworkVar( "Bool", 0, "IsRagdoll" )
 	self:NetworkVar( "Bool", 1, "AnimateBodyXY" )
 	self:NetworkVar( "Bool", 2, "BecomeRagdoll" )
+	self:NetworkVar( "Bool", 3, "HideBBox" )
 
 	if ( CLIENT ) then return end
 
@@ -196,6 +197,11 @@ function ENT:Think()
 
 	end
 
+	if ( SERVER ) then
+		-- Ugly hack because no replicated cvars for Lua :(
+		self:SetHideBBox( GetConVarNumber( "rb655_easy_animation_nobbox_sv" ) > 0 )
+	end
+
 	-- Ensure the animation plays smoothly
 	self:NextThink( CurTime() )
 	return true
@@ -206,7 +212,7 @@ if ( SERVER ) then return end
 
 function ENT:DrawBBox()
 
-	if ( GetConVarNumber( "rb655_easy_animation_noglow" ) != 0 ) then return end
+	if ( GetConVarNumber( "rb655_easy_animation_noglow" ) != 0 || self:GetHideBBox() ) then return end
 
 	local wep = LocalPlayer():GetActiveWeapon()
 	if ( !IsValid( wep ) || wep:GetClass() != "gmod_tool" && wep:GetClass() != "weapon_physgun" ) then
