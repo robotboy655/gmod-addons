@@ -98,8 +98,11 @@ properties.Add( "rb655_npc_weapon", {
 		for k, weapon in pairs( list.Get( "Weapon" ) ) do
 			if ( !weapon.Spawnable && !weapon.AdminSpawnable ) then continue end
 
-			Categorised[ weapon.Category ] = Categorised[ weapon.Category ] or {}
-			table.insert( Categorised[ weapon.Category ], weapon )
+			local cat = weapon.Category or "Other"
+			if ( !isstring( cat ) ) then cat = tostring( cat ) end
+
+			Categorised[ cat ] = Categorised[ cat ] or {}
+			table.insert( Categorised[ cat ], weapon )
 		end
 
 		for CategoryName, v in SortedPairs( Categorised ) do
