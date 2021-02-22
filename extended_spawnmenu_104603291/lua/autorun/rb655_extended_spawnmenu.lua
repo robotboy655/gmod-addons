@@ -13,11 +13,13 @@ if ( SERVER ) then
 		net.Broadcast()
 	end )
 
-return end
+	return
+
+end
 
 local cl_addTabs = CreateClientConVar( "rb655_create_sm_tabs", "0", true, true )
 
-/*local function removeOldTabls()
+--[[local function removeOldTabls()
 	for k, v in pairs( g_SpawnMenu.CreateMenu.Items ) do
 		if (v.Tab:GetText() == language.GetPhrase( "spawnmenu.category.npcs" ) or
 			v.Tab:GetText() == language.GetPhrase( "spawnmenu.category.entities" ) or
@@ -31,9 +33,25 @@ end
 
 hook.Add( "PopulateContent", "rb655_extended_spawnmenu", function( pnlContent, tree, node )
 	removeOldTabls() removeOldTabls() removeOldTabls() -- For some reason it doesn't work with only one call
-end )*/
+end )]]
 
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+local function getGameList()
+	local games = engine.GetGames()
+	table.insert( games, {
+		title = "All",
+		folder = "GAME",
+		icon = "all",
+		mounted = true
+	} )
+	table.insert( games, {
+		title = "Garry's Mod",
+		folder = "garrysmod",
+		mounted = true
+	} )
+	return games
+end
+
+--[[ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ ]]
 
 local theSound = nil
 
@@ -130,7 +148,10 @@ local function OnSndNodeSelected( self, node, name, path, pathid, icon, ViewPane
 
 end
 
-local function AddBrowseContentSnd( ViewPanel, node, name, icon, path, pathid, pnlContent )
+local function AddBrowseContentSnd( node, name, icon, path, pathid )
+
+	local ViewPanel = node.ViewPanel
+	local pnlContent = node.pnlContent
 
 	if ( !string.EndsWith( path, "/" ) && string.len( path ) > 1 ) then path = path .. "/" end
 
@@ -158,6 +179,27 @@ for _, addon in SortedPairs( folders ) do
 
 end
 
+local function RefreshAddonSounds( browseAddonSounds )
+		for _, addon in SortedPairsByMemberValue( engine.GetAddons(), "title" ) do
+
+		if ( !addon.downloaded ) then continue end
+		if ( !addon.mounted ) then continue end
+		if ( !table.HasValue( select( 2, file.Find( "*", addon.title ) ), "sound" ) ) then continue end
+
+		AddBrowseContentSnd( browseAddonSounds, addon.title, "icon16/bricks.png", "", addon.title )
+	end
+end
+local function RefreshGameSounds( browseGameSounds )
+	local games = getGameList()
+
+	for _, game in SortedPairsByMemberValue( games, "title" ) do
+		if ( !game.mounted ) then continue end
+		AddBrowseContentSnd( browseGameSounds, game.title, "games/16/" .. ( game.icon or game.folder ) .. ".png", "", game.folder )
+	end
+end
+
+local browseGameSounds
+local browseAddonSounds
 hook.Add( "PopulateContent", "SpawnmenuLoadSomeSounds", function( pnlContent, tree, browseNode ) timer.Simple( 0.5, function()
 
 	if ( !IsValid( tree ) || !IsValid( pnlContent ) ) then
@@ -167,63 +209,72 @@ hook.Add( "PopulateContent", "SpawnmenuLoadSomeSounds", function( pnlContent, tr
 		return
 	end
 
-	local browseSounds = tree:AddNode( "#spawnmenu.category.browsesounds", "icon16/sound.png" )
-
 	local ViewPanel = vgui.Create( "ContentContainer", pnlContent )
 	ViewPanel:SetVisible( false )
 
-	/* --------------------------------------------------------------------------------------- */
+	local browseSounds = tree:AddNode( "#spawnmenu.category.browsesounds", "icon16/sound.png" )
+	browseSounds.ViewPanel = ViewPanel
+	browseSounds.pnlContent = pnlContent
 
-	local browseAddonSounds = browseSounds:AddNode( "#spawnmenu.category.addons", "icon16/folder_database.png" )
+	--[[ --------------------------------------------------------------------------------------- ]]
 
-	for _, addon in SortedPairsByMemberValue( engine.GetAddons(), "title" ) do
+	browseAddonSounds = browseSounds:AddNode( "#spawnmenu.category.addons", "icon16/folder_database.png" )
+	browseAddonSounds.ViewPanel = ViewPanel
+	browseAddonSounds.pnlContent = pnlContent
 
-		if ( !addon.downloaded ) then continue end
-		if ( !addon.mounted ) then continue end
-		if ( !table.HasValue( select( 2, file.Find( "*", addon.title ) ), "sound" ) ) then continue end
+	RefreshAddonSounds( browseAddonSounds )
 
-		AddBrowseContentSnd( ViewPanel, browseAddonSounds, addon.title, "icon16/bricks.png", "", addon.title, pnlContent )
-	end
-
-	/* --------------------------------------------------------------------------------------- */
+	--[[ --------------------------------------------------------------------------------------- ]]
 
 	local browseLegacySounds = browseSounds:AddNode( "#spawnmenu.category.addonslegacy", "icon16/folder_database.png" )
+	browseLegacySounds.ViewPanel = ViewPanel
+	browseLegacySounds.pnlContent = pnlContent
 
 	for _, addon in SortedPairsByValue( addon_sounds ) do
 
-		AddBrowseContentSnd( ViewPanel, browseLegacySounds, addon, "icon16/bricks.png", "addons/" .. addon .. "/", "GAME", pnlContent )
+		AddBrowseContentSnd( browseLegacySounds, addon, "icon16/bricks.png", "addons/" .. addon .. "/", "GAME" )
 
 	end
 
-	/* --------------------------------------------------------------------------------------- */
+	--[[ --------------------------------------------------------------------------------------- ]]
 
-	AddBrowseContentSnd( ViewPanel, browseSounds, "#spawnmenu.category.downloads", "icon16/folder_database.png", "download/", "GAME", pnlContent )
+	AddBrowseContentSnd( browseSounds, "#spawnmenu.category.downloads", "icon16/folder_database.png", "download/", "GAME" )
 
-	/* --------------------------------------------------------------------------------------- */
+	--[[ --------------------------------------------------------------------------------------- ]]
 
-	local browseGameSounds = browseSounds:AddNode( "#spawnmenu.category.games", "icon16/folder_database.png" )
+	browseGameSounds = browseSounds:AddNode( "#spawnmenu.category.games", "icon16/folder_database.png" )
+	browseGameSounds.ViewPanel = ViewPanel
+	browseGameSounds.pnlContent = pnlContent
 
-	local games = engine.GetGames()
-	table.insert( games, {
-		title = "All",
-		folder = "GAME",
-		icon = "all",
-		mounted = true
-	} )
-	table.insert( games, {
-		title = "Garry's Mod",
-		folder = "garrysmod",
-		mounted = true
-	} )
-
-	for _, game in SortedPairsByMemberValue( games, "title" ) do
-		if ( !game.mounted ) then continue end
-		AddBrowseContentSnd( ViewPanel, browseGameSounds, game.title, "games/16/" .. ( game.icon or game.folder ) .. ".png", "", game.folder, pnlContent )
-	end
+	RefreshGameSounds( browseGameSounds )
 
 end ) end )
 
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+hook.Add( "GameContentChanged", "ES_RefreshSpawnmenuSounds", function()
+
+	if ( IsValid( browseAddonSounds ) ) then
+
+		-- TODO: Maybe be more advaced and do not delete => recreate all the nodes, only delete nodes for addons that were removed, add only the new ones?
+		browseAddonSounds:Clear()
+		browseAddonSounds.ViewPanel:Clear( true )
+
+		RefreshAddonSounds( browseAddonSounds )
+
+	end
+
+	if ( IsValid( browseGameSounds ) ) then
+
+		-- TODO: Maybe be more advaced and do not delete => recreate all the nodes, only delete nodes for addons that were removed, add only the new ones?
+		browseGameSounds:Clear()
+		browseGameSounds.ViewPanel:Clear( true )
+
+		RefreshGameSounds( browseGameSounds )
+
+	end
+
+end )
+
+--[[ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ ]]
 
 local function IsMaterialUsableOnEntities( matPath )
 	-- A png file? No thanks
@@ -352,7 +403,10 @@ local function OnMatNodeSelected( self, node, name, path, pathid, icon, ViewPane
 
 end
 
-local function AddBrowseContentMaterial( ViewPanel, node, name, icon, path, pathid, pnlContent )
+local function AddBrowseContentMaterial( node, name, icon, path, pathid )
+
+	local ViewPanel = node.ViewPanel
+	local pnlContent = node.pnlContent
 
 	if ( !string.EndsWith( path, "/" ) && string.len( path ) > 1 ) then path = path .. "/" end
 
@@ -380,6 +434,28 @@ for _, addon in SortedPairs( folders ) do
 
 end
 
+local function RefreshAddonMaterials( node )
+	for _, addon in SortedPairsByMemberValue( engine.GetAddons(), "title" ) do
+
+		if ( !addon.downloaded ) then continue end
+		if ( !addon.mounted ) then continue end
+		if ( !table.HasValue( select( 2, file.Find( "*", addon.title ) ), "materials" ) ) then continue end
+
+		AddBrowseContentMaterial( node, addon.title, "icon16/bricks.png", "", addon.title )
+
+	end
+end
+local function RefreshGameMaterials( node )
+	local games = getGameList()
+
+	for _, game in SortedPairsByMemberValue( games, "title" ) do
+		if ( !game.mounted ) then continue end
+		AddBrowseContentMaterial( node, game.title, "games/16/" .. ( game.icon or game.folder ) .. ".png", "", game.folder )
+	end
+end
+
+local browseAddonMaterials
+local browseGameMaterials
 hook.Add( "PopulateContent", "SpawnmenuLoadSomeMaterials", function( pnlContent, tree, browseNode ) timer.Simple( 0.5, function()
 
 	if ( !IsValid( tree ) || !IsValid( pnlContent ) ) then
@@ -389,78 +465,76 @@ hook.Add( "PopulateContent", "SpawnmenuLoadSomeMaterials", function( pnlContent,
 		return
 	end
 
-	local browseMaterials = tree:AddNode( "#spawnmenu.category.browsematerials", "icon16/picture_empty.png" )
-
 	local ViewPanel = vgui.Create( "ContentContainer", pnlContent )
 	ViewPanel:SetVisible( false )
 
-	/* --------------------------------------------------------------------------------------- */
+	local browseMaterials = tree:AddNode( "#spawnmenu.category.browsematerials", "icon16/picture_empty.png" )
+	browseMaterials.ViewPanel = ViewPanel
+	browseMaterials.pnlContent = pnlContent
 
-	local browseAddonMaterials = browseMaterials:AddNode( "#spawnmenu.category.addons", "icon16/folder_database.png" )
+	--[[ --------------------------------------------------------------------------------------- ]]
 
-	for _, addon in SortedPairsByMemberValue( engine.GetAddons(), "title" ) do
+	browseAddonMaterials = browseMaterials:AddNode( "#spawnmenu.category.addons", "icon16/folder_database.png" )
+	browseAddonMaterials.ViewPanel = ViewPanel
+	browseAddonMaterials.pnlContent = pnlContent
 
-		if ( !addon.downloaded ) then continue end
-		if ( !addon.mounted ) then continue end
-		if ( !table.HasValue( select( 2, file.Find( "*", addon.title ) ), "materials" ) ) then continue end
+	RefreshAddonMaterials( browseAddonMaterials )
 
-		AddBrowseContentMaterial( ViewPanel, browseAddonMaterials, addon.title, "icon16/bricks.png", "", addon.title, pnlContent )
-
-	end
-
-	/* --------------------------------------------------------------------------------------- */
+	--[[ --------------------------------------------------------------------------------------- ]]
 
 	local browseLegacyMaterials = browseMaterials:AddNode( "#spawnmenu.category.addonslegacy", "icon16/folder_database.png" )
+	browseLegacyMaterials.ViewPanel = ViewPanel
+	browseLegacyMaterials.pnlContent = pnlContent
 
 	for _, addon in SortedPairsByValue( addon_mats ) do
 
-		AddBrowseContentMaterial( ViewPanel, browseLegacyMaterials, addon, "icon16/bricks.png", "addons/" .. addon .. "/", "GAME", pnlContent )
+		AddBrowseContentMaterial( browseLegacyMaterials, addon, "icon16/bricks.png", "addons/" .. addon .. "/", "GAME" )
 
 	end
 
-	/* --------------------------------------------------------------------------------------- */
+	--[[ --------------------------------------------------------------------------------------- ]]
 
-	AddBrowseContentMaterial( ViewPanel, browseMaterials, "#spawnmenu.category.downloads", "icon16/folder_database.png", "download/", "GAME", pnlContent )
+	AddBrowseContentMaterial( browseMaterials, "#spawnmenu.category.downloads", "icon16/folder_database.png", "download/", "GAME" )
 
-	/* --------------------------------------------------------------------------------------- */
+	--[[ --------------------------------------------------------------------------------------- ]]
 
-	local browseGameMaterials = browseMaterials:AddNode( "#spawnmenu.category.games", "icon16/folder_database.png" )
+	browseGameMaterials = browseMaterials:AddNode( "#spawnmenu.category.games", "icon16/folder_database.png" )
+	browseGameMaterials.ViewPanel = ViewPanel
+	browseGameMaterials.pnlContent = pnlContent
 
-	local games = engine.GetGames()
-	table.insert( games, {
-		title = "All",
-		folder = "GAME",
-		icon = "all",
-		mounted = true
-	} )
-	table.insert( games, {
-		title = "Garry's Mod",
-		folder = "garrysmod",
-		mounted = true
-	} )
-
-	for _, game in SortedPairsByMemberValue( games, "title" ) do
-		if ( !game.mounted ) then continue end
-		AddBrowseContentMaterial( ViewPanel, browseGameMaterials, game.title, "games/16/" .. ( game.icon or game.folder ) .. ".png", "", game.folder, pnlContent )
-	end
+	RefreshGameMaterials( browseGameMaterials )
 
 end ) end )
 
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+hook.Add( "GameContentChanged", "ES_RefreshSpawnmenuMaterials", function()
+
+	if ( IsValid( browseAddonMaterials ) ) then
+
+		-- TODO: Maybe be more advaced and do not delete => recreate all the nodes, only delete nodes for addons that were removed, add only the new ones?
+		browseAddonMaterials:Clear()
+		browseAddonMaterials.ViewPanel:Clear( true )
+
+		RefreshAddonMaterials( browseAddonMaterials )
+
+	end
+
+	if ( IsValid( browseGameMaterials ) ) then
+
+		-- TODO: Maybe be more advaced and do not delete => recreate all the nodes, only delete nodes for addons that were removed, add only the new ones?
+		browseGameMaterials:Clear()
+		browseGameMaterials.ViewPanel:Clear( true )
+
+		RefreshGameMaterials( browseGameMaterials )
+
+	end
+
+end )
+
+--[[ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ ]]
+--[[ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ ]]
+--[[ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ ]]
+--[[ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ ]]
+--[[ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ ]]
 
 hook.Add( "PopulateContent", "rb655_extended_spawnmenu_entities", function( pnlContent, tree, node )
 	if ( !cl_addTabs:GetBool() ) then return end
@@ -513,8 +587,6 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_entities", function( pnlC
 
 	end
 end )
-
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
 
 hook.Add( "PopulateContent", "rb655_extended_spawnmenu_post_processing", function( pnlContent, tree, node )
 	if ( !cl_addTabs:GetBool() ) then return end
@@ -574,8 +646,6 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_post_processing", functio
 
 end )
 
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
-
 hook.Add( "PopulateContent", "rb655_extended_spawnmenu_npcs", function( pnlContent, tree, node )
 	if ( !cl_addTabs:GetBool() ) then return end
 
@@ -629,8 +699,6 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_npcs", function( pnlConte
 
 	end
 end )
-
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
 
 hook.Add( "PopulateContent", "rb655_extended_spawnmenu_vehicles", function( pnlContent, tree, node )
 	if ( !cl_addTabs:GetBool() ) then return end
@@ -686,8 +754,6 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_vehicles", function( pnlC
 	end
 
 end )
-
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
 
 hook.Add( "PopulateContent", "rb655_extended_spawnmenu_weapons", function( pnlContent, tree, node )
 	if ( !cl_addTabs:GetBool() ) then return end

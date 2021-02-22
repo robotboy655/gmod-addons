@@ -76,7 +76,7 @@ hook.Add( "PopulateContent", "LegacyAddonProps", function( pnlContent, tree, nod
 
 	end
 
-	/* -------------------------- DOWNLOADS -------------------------- */
+	--[[ -------------------------- DOWNLOADS -------------------------- ]]
 
 	local fi, fo = file.Find( "download/models", "GAME" )
 	if ( !fi && !fo ) then return end
@@ -106,7 +106,7 @@ hook.Add( "PopulateContent", "LegacyAddonProps", function( pnlContent, tree, nod
 
 end )
 
-/* -------------------------------------------------------------------------- The addon info -------------------------------------------------------------------------- */
+--[[ -------------------------------------------------------------------------- The addon info -------------------------------------------------------------------------- ]]
 
 concommand.Add( "extsm_addoninfo", function()
 	local frame = vgui.Create( "DFrame" )
@@ -399,7 +399,7 @@ end
 
 vgui.Register( "rb655_addonInfo", PANEL, "Panel" )
 
-/* ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ */
+--[[ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ ]]
 
 -- I spent too much time on this than I care to admit
 hook.Add( "PopulatePropMenu", "rb655_LoadLegacySpawnlists", function()
@@ -412,7 +412,7 @@ hook.Add( "PopulatePropMenu", "rb655_LoadLegacySpawnlists", function()
 		local content = file.Read( "settings/spawnlist/" .. spawnlist, "MOD" )
 		if ( !content ) then continue end
 
-		/*local is = string.find( content, "TableToKeyValues" )
+		--[[local is = string.find( content, "TableToKeyValues" )
 		if ( is != nil ) then continue end
 
 		for id, t in pairs( spawnmenu.GetPropTable() ) do -- This somehow freezes the game when opening Q menu => FUCK THIS SHIT
@@ -425,7 +425,7 @@ hook.Add( "PopulatePropMenu", "rb655_LoadLegacySpawnlists", function()
 		if ( !added ) then
 			spawnmenu.AddPropCategory( "rb655_legacy_spawnlists", "Legacy Spawnlists", {}, "icon16/folder.png", sid, 0 )
 			added = true
-		end*/
+		end]]
 
 		content = util.KeyValuesToTable( content )
 
