@@ -174,6 +174,7 @@ end, "Break", ExplodeIcon ) -- Do not include item_item_crate, it insta crashes 
 
 AddEntFunctionProperty( "rb655_dissolve", "Disintegrate", 657, function( ent, ply )
 	if ( ent:GetModel() && ent:GetModel():StartWith( "*" ) ) then return false end
+	if ( ent:IsPlayer() ) then return false end
 
 	return true
 end, function( ent )
