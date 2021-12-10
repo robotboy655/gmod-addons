@@ -12,18 +12,23 @@ local extraItems = {
 local function GiveWeapon( ply, ent, args )
 	if ( !args or !args[ 1 ] or !isstring( args[ 1 ] ) ) then return end
 
-	local swep = list.Get( "Weapon" )[ args[ 1 ] ]
+	local className = args[ 1 ]
+
+	local swep = list.Get( "Weapon" )[ className ]
 	if ( swep == nil ) then
 		for id, t in pairs( extraItems ) do
-			if ( t.ClassName == args[ 1 ] ) then swep = t end
+			if ( t.ClassName == className ) then swep = t end
 		end
 	end
 	if ( swep == nil ) then return end
 
-	if ( ( !swep.Spawnable && !ply:IsAdmin() ) or ( swep.AdminOnly && !ply:IsAdmin() ) ) then return end
-	if ( !hook.Run( "PlayerGiveSWEP", ply, args[ 1 ], swep ) ) then return end
+	-- Cannot validate if the player is admin for admin weapons if we got no player object (saves)
+	if ( IsValid( ply ) ) then
+		if ( ( !swep.Spawnable && !ply:IsAdmin() ) or ( swep.AdminOnly && !ply:IsAdmin() ) ) then return end
+		if ( !hook.Run( "PlayerGiveSWEP", ply, className, swep ) ) then return end
+	end
 
-	ent:Give( args[ 1 ] )
+	ent:Give( className )
 	if ( SERVER ) then duplicator.StoreEntityModifier( ent, "rb655_npc_weapon", args ) end
 end
 duplicator.RegisterEntityModifier( "rb655_npc_weapon", GiveWeapon )
