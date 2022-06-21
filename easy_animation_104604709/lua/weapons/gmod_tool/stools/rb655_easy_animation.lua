@@ -172,7 +172,10 @@ if ( SERVER ) then
 		local ent = tool:GetSelecetedEntity()
 		if ( !IsEntValid( ent ) ) then return end
 
-		ent:SetPoseParameter( ent:GetPoseParameterName( math.floor( tonumber( args[ 1 ] ) ) ), tonumber( args[ 2 ] ) )
+		local pp_name = ent:GetPoseParameterName( math.floor( tonumber( args[ 1 ] ) ) )
+		if ( !pp_name ) then return end
+
+		ent:SetPoseParameter( pp_name, tonumber( args[ 2 ] ) )
 	end )
 
 	concommand.Add( "rb655_easy_animation_add", function( ply, cmd, args )
