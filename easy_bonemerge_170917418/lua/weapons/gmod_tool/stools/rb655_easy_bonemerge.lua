@@ -39,7 +39,7 @@ if ( SERVER ) then
 		if ( !constraint.HasConstraints( ent ) ) then return end
 
 		for _, v in pairs( constraint.GetAllConstrainedEntities( ent ) ) do
-			if ( v == ent ) then continue end
+			if ( v == ent || v:GetClass() == "ent_bonemerged" ) then continue end
 			if ( constraint.FindConstraint( v, "EasyBonemergeParent" ) ) then continue end
 
 			local oldent = v
