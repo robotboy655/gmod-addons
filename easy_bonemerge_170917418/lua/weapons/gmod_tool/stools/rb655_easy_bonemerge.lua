@@ -175,6 +175,35 @@ if ( SERVER ) then
 		ent:Remove()
 	end )
 
+	util.AddNetworkString( "rb655_bm_apply_tool" )
+	net.Receive( "rb655_bm_apply_tool", function( len, ply )
+		local ent = net.ReadEntity()
+		local tool = net.ReadString()
+		if ( !IsValid( ent ) || ent:GetClass() != "ent_bonemerged" ) then return end
+
+		local parent = ent:GetParent()
+		if ( !IsValid( parent ) ) then return end
+		if ( parent:GetClass() == "prop_dynamic" && IsValid( parent:GetParent() ) ) then parent = parent:GetParent() end
+
+		local toolBm = ply:GetTool( "rb655_easy_bonemerge" )
+		if ( !istable( toolBm ) ) then return end
+
+		if ( toolBm:GetSelectedEntity() != parent ) then return end
+
+		local toolInst = ply:GetTool( tool )
+		if ( !istable( toolInst ) ) then return end
+
+		if ( tool == "eyeposer" ) then
+			-- Hack
+			toolInst.SelectedEntity = nil
+			toolInst:LeftClick( { HitPos = ply:GetShootPos(), Entity = ent } )
+			ply:ConCommand( "gmod_tool " .. tool )
+		elseif ( tool == "faceposer" ) then
+			toolInst:RightClick( { HitPos = ply:GetShootPos(), Entity = ent } )
+			ply:ConCommand( "gmod_tool " .. tool )
+		end
+	end )
+
 end
 
 function TOOL:GetSelectedEntity()
@@ -396,6 +425,13 @@ local function UndoThisBonemerge( ent )
 	net.SendToServer()
 end
 
+local function ApplyToolToBonemerge( ent, tool )
+	net.Start( "rb655_bm_apply_tool" )
+		net.WriteEntity( ent )
+		net.WriteString( tool )
+	net.SendToServer()
+end
+
 function TOOL.BuildCPanel( panel )
 
 	panel:Help( "#tool.rb655_easy_bonemerge.infos" )
@@ -440,11 +476,36 @@ function TOOL.BuildCPanel( panel )
 		for k, v in pairs( s.LastSelectedEntity:GetChildren() ) do
 			if ( !IsValid( v ) || v:GetClass() != "ent_bonemerged" ) then continue end
 
-			local txt = s:Add( "DButton" )
+			local container = s:Add( "Panel" )
+			container:Dock( TOP )
+			container:DockMargin( 5, 5, 5, 0 )
+
+			local fp = container:Add( "DButton" )
+			fp:SetText( "Face" )
+			fp:SetTooltip( "Open model in face poser" )
+			fp:Dock( RIGHT )
+			fp:DockMargin( 5, 0, 0, 0 )
+			fp:SetWide( 32 )
+			fp.ent = v
+			fp.DoClick = function( t )
+				ApplyToolToBonemerge( t.ent, "faceposer" )
+			end
+		
+			local ep = container:Add( "DButton" )
+			ep:SetText( "Eye" )
+			ep:SetTooltip( "Open model in eye poser" )
+			ep:Dock( RIGHT )
+			ep:DockMargin( 5, 0, 0, 0 )
+			ep:SetWide( 32 )
+			ep.ent = v
+			ep.DoClick = function( t )
+				ApplyToolToBonemerge( t.ent, "eyeposer" )
+			end
+
+			local txt = container:Add( "DButton" )
 			txt:SetText( "Undo " .. v:GetModel() .. "#" .. v:EntIndex() )
-			txt:Dock( TOP )
+			txt:Dock( FILL )
 			txt.ent = v
-			txt:DockMargin( 5, 5, 5, 0 )
 			txt.DoClick = function( t )
 				UndoThisBonemerge( t.ent )
 			end
