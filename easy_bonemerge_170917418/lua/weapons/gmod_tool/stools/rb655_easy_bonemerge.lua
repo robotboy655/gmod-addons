@@ -336,6 +336,13 @@ function TOOL:UpdateGhostEntity( ent, ply, tr )
 	ent:SetParent( selectedEnt, 0 )
 	ent:AddEffects( EF_BONEMERGE )
 	ent:SetNoDraw( false )
+
+	for i = 0, ent:GetBoneCount() do
+		if ( trEnt:GetManipulateBoneScale( i ) != ent:GetManipulateBoneScale( i ) ) then ent:ManipulateBoneScale( i, trEnt:GetManipulateBoneScale( i ) ) end
+		if ( trEnt:GetManipulateBoneAngles( i ) != ent:GetManipulateBoneAngles( i ) ) then ent:ManipulateBoneAngles( i, trEnt:GetManipulateBoneAngles( i ) ) end
+		if ( trEnt:GetManipulateBonePosition( i ) != ent:GetManipulateBonePosition( i ) ) then ent:ManipulateBonePosition( i, trEnt:GetManipulateBonePosition( i ) ) end
+		if ( trEnt:GetManipulateBoneJiggle( i ) != ent:GetManipulateBoneJiggle( i ) ) then ent:ManipulateBoneJiggle( i, trEnt:GetManipulateBoneJiggle( i ) ) end
+	end
 end
 
 function TOOL:Think()
