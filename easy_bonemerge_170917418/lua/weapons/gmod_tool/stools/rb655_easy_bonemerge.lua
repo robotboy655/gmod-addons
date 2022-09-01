@@ -399,7 +399,9 @@ Once bonemerged, the bones of the target model(s) will be placed into the exact 
 You cannot select which bones to attach objects to. Bonemerging features are defined by the model author(s) and cannot be changed without editing the model.
 
 Selected model - The entity you select with right click
-Target model(s) - The entities you left click to bone merge onto the selected model]] )
+Target model(s) - The entities you left click to bone merge onto the selected model
+
+Right click on buttons below for extra options.]] )
 
 language.Add( "tool.rb655_easy_bonemerge.noshared", "Warning!\nNo shared bones!\nThese 2 models are not bonemerge compatible!" )
 language.Add( "tool.rb655_easy_bonemerge.backwards", "Warning!\nSelected model has less bones than target model!\nYou are most likely trying to bonemerge backwards!" )
@@ -410,6 +412,7 @@ language.Add( "tool.rb655_easy_bonemerge.noglow", "Don't render glow/halo around
 language.Add( "tool.rb655_easy_bonemerge.selected_undo", "Undo:" )
 language.Add( "tool.rb655_easy_bonemerge.noent", "No entity selected!" )
 language.Add( "tool.rb655_easy_bonemerge.nomodels", "No attached models!" )
+language.Add( "tool.rb655_easy_bonemerge.undo.tooltip", "Remove this attached model from selected entity." )
 
 function TOOL:GetStage()
 	if ( IsValid( self:GetSelectedEntity() ) ) then return 1 end
@@ -483,41 +486,25 @@ function TOOL.BuildCPanel( panel )
 		for k, v in pairs( s.LastSelectedEntity:GetChildren() ) do
 			if ( !IsValid( v ) || v:GetClass() != "ent_bonemerged" ) then continue end
 
-			local container = s:Add( "Panel" )
-			container:Dock( TOP )
-			container:DockMargin( 5, 5, 5, 0 )
-
-			local fp = container:Add( "DButton" )
-			fp:SetText( "Face" )
-			fp:SetTooltip( "Open model in face poser" )
-			fp:Dock( RIGHT )
-			fp:DockMargin( 5, 0, 0, 0 )
-			fp:SetWide( 32 )
-			fp.ent = v
-			fp.DoClick = function( t )
-				ApplyToolToBonemerge( t.ent, "faceposer" )
-			end
-		
-			local ep = container:Add( "DButton" )
-			ep:SetText( "Eye" )
-			ep:SetTooltip( "Open model in eye poser" )
-			ep:Dock( RIGHT )
-			ep:DockMargin( 5, 0, 0, 0 )
-			ep:SetWide( 32 )
-			ep.ent = v
-			ep.DoClick = function( t )
-				ApplyToolToBonemerge( t.ent, "eyeposer" )
-			end
-
-			local txt = container:Add( "DButton" )
-			txt:SetText( "Undo " .. v:GetModel() .. "#" .. v:EntIndex() )
-			txt:Dock( FILL )
-			txt.ent = v
-			txt.DoClick = function( t )
+			local btn = s:Add( "DButton" )
+			btn:SetText( "Undo " .. v:GetModel():sub( 8 ) .. "#" .. v:EntIndex() )
+			btn:Dock( TOP )
+			btn:SetToolTip( "#tool.rb655_easy_bonemerge.undo.tooltip" )
+			btn:DockMargin( 5, 5, 5, 0 )
+			btn.bonemergeButton = true
+			btn.ent = v
+			btn.DoClick = function( t )
 				UndoThisBonemerge( t.ent )
 			end
+			btn.DoRightClick = function( t )
+				local menu = DermaMenu()
+				menu:AddOption( "Open bonemerged model in Face Poser", function() ApplyToolToBonemerge( t.ent, "faceposer" ) end )
+				menu:AddOption( "Open bonemerged model in Eye Poser", function() ApplyToolToBonemerge( t.ent, "eyeposer" ) end )
+				-- TODO: Set color? Set material?
+				menu:Open()
+			end
 
-			height = height + txt:GetTall() + 5
+			height = height + btn:GetTall() + 5
 		end
 
 		if ( height > 0 ) then
@@ -534,6 +521,15 @@ function TOOL.BuildCPanel( panel )
 	pnl:Rebuild()
 
 end
+
+local color_red = Color( 255, 0, 0 )
+
+hook.Add( "PreDrawHalos", "rb655_bonemerge_highlight", function()
+	local hovered = vgui.GetHoveredPanel()
+	if ( !IsValid( hovered ) || !hovered.bonemergeButton || !IsValid( hovered.ent ) ) then return end
+
+	halo.Add( { hovered.ent }, color_red, 1, 1, 10, true, true )
+end )
 
 --------------------------------------------------------------------------
 ----------------------------------- HUD ----------------------------------
