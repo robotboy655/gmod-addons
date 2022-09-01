@@ -291,7 +291,7 @@ function TOOL.BuildCPanel( panel, ent )
 		for k, v in SortedPairsByValue( ent:GetSequenceList() ) do
 			local isbad = false
 
-			for i, s in pairs( badStrings ) do if ( string.find( string.lower( v ), s ) != nil ) then isbad = true break end end
+			for i, s in pairs( badStrings ) do if ( string.find( string.lower( v ), s, 1, true ) != nil ) then isbad = true break end end
 			if ( isbad == true && LocalPlayer():GetTool( "rb655_easy_animation" ):GetClientNumber( "nohide" ) == 0 ) then continue end
 
 			for i, s in pairs( badBegginings ) do if ( s == string.Left( string.lower( v ), string.len( s ) ) ) then isbad = true break end end
@@ -327,7 +327,7 @@ function TOOL.BuildCPanel( panel, ent )
 
 			filter.OnValueChange = function( s, txt )
 				for id, pnl in pairs( animList:GetCanvas():GetChildren() ) do
-					if ( !pnl:GetValue( 1 ):lower():find( txt:lower() ) ) then
+					if ( !pnl:GetValue( 1 ):lower():find( txt:lower(), 1, true ) ) then
 						pnl:SetVisible( false )
 					else
 						pnl:SetVisible( true )
