@@ -83,7 +83,7 @@ if ( SERVER ) then
 
 	function constraint_EasyBonemerge( ent_parent, Ent2, EntityMods, BoneMods )
 		if ( !IsValid( ent_parent ) ) then MsgN( "Easy Bonemerge Tool: Your dupe/save is missing the target entity, cannot apply bonemerged props!" ) return end
-		if ( !IsValid( Ent2 ) ) then MsgN( "Easy Bonemerge Tool: Your dupe/save is missing the bonemerged prop, cannot restore bonemerged prop!" ) return end
+		if ( !IsValid( Ent2 ) ) then MsgN( "Easy Bonemerge Tool: Your dupe/save is missing the bonemerged prop, cannot restore bonemerge effect!" ) return end
 
 		Ent2:SetParent( ent_parent, 0 )
 		if ( IsValid( ent_parent ) && ent_parent:GetClass() == "prop_effect" ) then
@@ -199,6 +199,9 @@ if ( SERVER ) then
 			toolInst:LeftClick( { HitPos = ply:GetShootPos(), Entity = ent } )
 			ply:ConCommand( "gmod_tool " .. tool )
 		elseif ( tool == "faceposer" ) then
+			toolInst:RightClick( { HitPos = ply:GetShootPos(), Entity = ent } )
+			ply:ConCommand( "gmod_tool " .. tool )
+		elseif ( tool == "rb655_easy_bodygroup" ) then
 			toolInst:RightClick( { HitPos = ply:GetShootPos(), Entity = ent } )
 			ply:ConCommand( "gmod_tool " .. tool )
 		end
@@ -500,6 +503,9 @@ function TOOL.BuildCPanel( panel )
 				local menu = DermaMenu()
 				menu:AddOption( "Open bonemerged model in Face Poser", function() ApplyToolToBonemerge( t.ent, "faceposer" ) end )
 				menu:AddOption( "Open bonemerged model in Eye Poser", function() ApplyToolToBonemerge( t.ent, "eyeposer" ) end )
+				if ( LocalPlayer():GetTool( "rb655_easy_bodygroup" ) ) then
+					menu:AddOption( "Open bonemerged model in Easy Bodygroup Tool", function() ApplyToolToBonemerge( t.ent, "rb655_easy_bodygroup" ) end )
+				end
 				-- TODO: Set color? Set material?
 				menu:Open()
 			end
