@@ -128,6 +128,9 @@ local function MakeDTVarToggleProperty( class, tab )
 
 		Checked = function( self, ent, ply )
 
+			-- This should never happen
+			if ( !isfunction( ent[ "Get" .. self.DTVariable ] ) ) then return false end
+
 			return ent[ "Get" .. self.DTVariable ]( ent )
 
 		end,
@@ -146,6 +149,9 @@ local function MakeDTVarToggleProperty( class, tab )
 			if ( !properties.CanBeTargeted( ent, ply ) ) then return end
 			if ( !self:Filter( ent, ply ) ) then return end
 
+			if ( !isfunction( ent[ "Get" .. self.DTVariable ] ) ) then return end
+			if ( !isfunction( ent[ "Set" .. self.DTVariable ] ) ) then return end
+		
 			ent[ "Set" .. self.DTVariable ]( ent, !ent[ "Get" .. self.DTVariable ]( ent ) )
 
 		end
