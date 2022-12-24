@@ -233,11 +233,11 @@ language.Add( "tool.rb655_easy_animation.delay.help", "The time between you left
 language.Add( "tool.rb655_easy_animation.loop", "Loop Animation" )
 language.Add( "tool.rb655_easy_animation.loop.help", "Play animation again when it ends." )
 language.Add( "tool.rb655_easy_animation.nohide", "Do not filter animations" )
-language.Add( "tool.rb655_easy_animation.nohide.help", "Enabling this option will show you the full list of animations available for selected entity. Please note, that this list can be so long, that GMod may freeze for a few seconds." )
+language.Add( "tool.rb655_easy_animation.nohide.help", "Enabling this option will show you the full list of animations available for selected entity. Please note, that this list can be so long, that GMod may freeze for a few seconds. For this reason we hide a bunch of animations deemed \"useless\" by default, such as gestures and other delta animations." )
 language.Add( "tool.rb655_easy_animation.poseparam.help", "The sliders above are the Pose Parameters. They affect how certain animations look, for example the direction for Team Fortress 2 run animations, etc." )
 language.Add( "tool.rb655_easy_animation.poseparam.badent", "Changing Pose Parameters is only supported on Animatable props!" )
 
-language.Add( "tool.rb655_easy_animation.ai", "NPC is selected, but NPC thinking is not disabled!" )
+language.Add( "tool.rb655_easy_animation.ai", "NPC is selected, but NPC thinking is not disabled! Without that the NPC will reset its animations every frame." )
 language.Add( "tool.rb655_easy_animation.ragdoll", "Ragdolls cannot be animated! Open context menu (Hold C) > right click on ragdoll > Make Animatable" )
 language.Add( "tool.rb655_easy_animation.prop", "Props cannot be animated properly! Open context menu (Hold C) > right click on entity > Make Animatable" )
 language.Add( "tool.rb655_easy_animation.badent", "This entity does not have any animations." )
@@ -271,19 +271,28 @@ function TOOL:UpdateControlPanel( index )
 	self.BuildCPanel( panel, self:GetSelecetedEntity() )
 end
 
+local clr_err = Color( 200, 0, 0 )
 function TOOL.BuildCPanel( panel, ent )
-	if ( !IsValid( ent ) ) then
-		ent = LocalPlayer():GetTool( "rb655_easy_animation" ):GetSelecetedEntity()
+
+	local tool = LocalPlayer() && LocalPlayer():GetTool( "rb655_easy_animation" )
+	local nohide = false
+
+	if ( tool ) then
+		if ( !IsValid( ent ) ) then ent = tool:GetSelecetedEntity() end
+		nohide = tool:GetClientNumber( "nohide" ) != 0
 	end
 
 	if ( !IsValid( ent ) ) then
-		panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.noent" } )
+
+		panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.noent" } ):SetTextColor( clr_err )
+
 	elseif ( IsEntValid( ent ) ) then
+
 		local fine = true
 
-		if ( GetConVarNumber( "ai_disabled" ) == 0 && ent:IsNPC() ) then panel:AddControl( "Label", {Text = "#tool.rb655_easy_animation.ai"} ) fine = false end
-		if ( ent:GetClass() == "prop_ragdoll" ) then panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.ragdoll" } ) fine = false end
-		if ( ent:GetClass() == "prop_physics" or ent:GetClass() == "prop_physics_multiplayer" or ent:GetClass() == "prop_physics_override" ) then panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.prop" } ) end
+		if ( GetConVarNumber( "ai_disabled" ) == 0 && ent:IsNPC() ) then panel:AddControl( "Label", {Text = "#tool.rb655_easy_animation.ai"} ):SetTextColor( clr_err ) fine = false end
+		if ( ent:GetClass() == "prop_ragdoll" ) then panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.ragdoll" } ):SetTextColor( clr_err ) fine = false end
+		if ( ent:GetClass() == "prop_physics" or ent:GetClass() == "prop_physics_multiplayer" or ent:GetClass() == "prop_physics_override" ) then panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.prop" } ):SetTextColor( clr_err ) end
 
 		local t = {}
 		local badBegginings = { "g_", "p_", "e_", "b_", "bg_", "hg_", "tc_", "aim_", "turn", "gest_", "pose_", "pose_", "auto_", "layer_", "posture", "bodyaccent", "a_" }
@@ -292,10 +301,10 @@ function TOOL.BuildCPanel( panel, ent )
 			local isbad = false
 
 			for i, s in pairs( badStrings ) do if ( string.find( string.lower( v ), s, 1, true ) != nil ) then isbad = true break end end
-			if ( isbad == true && LocalPlayer():GetTool( "rb655_easy_animation" ):GetClientNumber( "nohide" ) == 0 ) then continue end
+			if ( isbad == true && !nohide ) then continue end
 
 			for i, s in pairs( badBegginings ) do if ( s == string.Left( string.lower( v ), string.len( s ) ) ) then isbad = true break end end
-			if ( isbad == true && LocalPlayer():GetTool( "rb655_easy_animation" ):GetClientNumber( "nohide" ) == 0 ) then continue end
+			if ( isbad == true && !nohide ) then continue end
 
 			language.Add( "rb655_anim_" .. v, MakeNiceName( v ) )
 			t[ "#rb655_anim_" .. v ] = { rb655_easy_animation_anim = v, rb655_easy_animation_anim_do = v }
@@ -337,8 +346,11 @@ function TOOL.BuildCPanel( panel, ent )
 				animList:InvalidateLayout()
 			end
 		end
+	
 	elseif ( !IsEntValid( ent ) ) then
-		panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.badent" } )
+
+		panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.badent" } ):SetTextColor( clr_err )
+
 	end
 
 	if ( IsValid( ent ) && ent:GetClass() == "prop_animatable" ) then
@@ -362,8 +374,11 @@ function TOOL.BuildCPanel( panel, ent )
 		if ( ent:GetNumPoseParameters() > 0 ) then
 			panel:ControlHelp( "#tool.rb655_easy_animation.poseparam.help" ):DockMargin( 32, 8, 32, 8 )
 		end
+	
 	elseif ( IsValid( ent ) && ent:GetClass() != "prop_animatable" && ent:GetNumPoseParameters() > 0 ) then
-		panel:ControlHelp( "#tool.rb655_easy_animation.poseparam.badent" ):DockMargin( 32, 8, 32, 8 )
+		local errlbl = panel:ControlHelp( "#tool.rb655_easy_animation.poseparam.badent" )
+		errlbl:DockMargin( 32, 8, 32, 8 )
+		errlbl:SetTextColor( clr_err )
 	end
 
 	local pnl = vgui.Create( "DPanelList" )
@@ -374,7 +389,6 @@ function TOOL.BuildCPanel( panel, ent )
 	pnl:SetPadding( 2 )
 	Derma_Hook( pnl, "Paint", "Paint", "Panel" ) -- Awesome GWEN background
 
-	local tool = LocalPlayer():GetTool( "rb655_easy_animation" )
 	if ( tool && tool.AnimationArray ) then
 		for i, d in pairs( tool.AnimationArray ) do
 			local s = vgui.Create( "RAnimEntry" )
