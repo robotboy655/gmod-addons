@@ -35,7 +35,7 @@ if ( SERVER ) then
 	end
 
 	-- Adds any constrained entities to the bonemerge
-	function rb655_CheckForWelds( ent, parent )
+	local function rb655_CheckForWelds( ent, parent )
 		if ( !constraint.HasConstraints( ent ) ) then return end
 
 		for _, v in pairs( constraint.GetAllConstrainedEntities( ent ) ) do
@@ -57,7 +57,7 @@ if ( SERVER ) then
 	end
 
 	-- Allows for bonemerging depth
-	function rb655_CheckForBonemerges( oldent, newent )
+	local function rb655_CheckForBonemerges( oldent, newent )
 		for id, ent in pairs( ents.GetAll() ) do
 			if ( ent:GetParent() == oldent && ent:GetClass() == "ent_bonemerged" && !ent.LocalPos ) then
 				rb655_ApplyBonemerge( ent, newent )
@@ -67,6 +67,8 @@ if ( SERVER ) then
 
 	-- Entry point
 	function rb655_ApplyBonemerge( ent, selectedEnt )
+		if ( selectedEnt == ent ) then return end
+
 		local oldent = ent
 		if ( IsValid( ent ) && ent:GetClass() == "prop_effect" ) then oldent = ent.AttachedEntity end
 
@@ -228,8 +230,9 @@ end
 
 function TOOL:LeftClick( tr )
 	local ent = self:GetSelectedEntity()
-	if ( IsValid( tr.Entity ) && tr.Entity:GetClass() == "prop_effect" ) then tr.Entity = tr.Entity.AttachedEntity end
+	if ( !IsValid( ent ) || !IsValid( tr.Entity ) || tr.Entity == ent || tr.Entity:IsPlayer() || tr.Entity:IsNPC() || tr.Entity:GetModel():StartWith( "*" ) ) then return false end
 
+	if ( IsValid( tr.Entity ) && tr.Entity:GetClass() == "prop_effect" ) then tr.Entity = tr.Entity.AttachedEntity end
 	if ( !IsValid( ent ) || !IsValid( tr.Entity ) || tr.Entity == ent || tr.Entity:IsPlayer() || tr.Entity:IsNPC() || tr.Entity:GetModel():StartWith( "*" ) ) then return false end
 
 	if ( CLIENT ) then return true end
