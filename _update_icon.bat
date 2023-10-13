@@ -1,5 +1,7 @@
 @echo off
 
+:: Must have gmad.bat and gmpublish.bat on PATH like so: gmpublish.exe %*
+
 echo.
 
 set p=%1
@@ -10,6 +12,6 @@ echo WORKSHOP ID IS %id%
 
 echo.
 echo Uploading Icon
-"E:\Games_Steam\steamapps\common\GarrysMod\bin\gmpublish.exe" update -icon %p% -id %id%
+call gmpublish update -icon %p% -id %id%
 
 pause
