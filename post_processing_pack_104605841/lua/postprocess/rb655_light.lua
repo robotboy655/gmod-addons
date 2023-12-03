@@ -11,7 +11,7 @@ local ConVars = {
 	pp_light_decay = "1024",
 	pp_light_offset = "72",
 	pp_light_ent_lights = "1"
- }
+}
 
 for k, v in pairs( ConVars ) do CreateClientConVar( k, v, true, false ) end
 

@@ -82,13 +82,13 @@ spawnmenu.AddContentType( "sound", function( container, obj )
 		rb655_playsound( obj.spawnname )
 	end
 
-	icon.OpenMenu = function( icon )
+	icon.OpenMenu = function( icn )
 		local menu = DermaMenu()
 			menu:AddOption( "#spawnmenu.menu.copy", function() SetClipboardText( obj.spawnname ) end ):SetIcon( "icon16/page_copy.png" )
 			menu:AddOption( "Play on all clients", function() RunConsoleCommand( "rb655_playsound_all", obj.spawnname ) end ):SetIcon( "icon16/sound.png" )
 			menu:AddOption( "Stop all sounds", function() RunConsoleCommand( "stopsound" ) end ):SetIcon( "icon16/sound_mute.png" )
 			menu:AddSpacer()
-			menu:AddOption( "#spawnmenu.menu.delete", function() icon:Remove() hook.Run( "SpawnlistContentChanged", icon ) end ):SetIcon( "icon16/bin_closed.png" )
+			menu:AddOption( "#spawnmenu.menu.delete", function() icn:Remove() hook.Run( "SpawnlistContentChanged", icn ) end ):SetIcon( "icon16/bin_closed.png" )
 		menu:Open()
 	end
 
@@ -125,8 +125,8 @@ local function OnSndNodeSelected( self, node, name, path, pathid, icon, ViewPane
 				mats:SetPathID( node:GetPathID() )
 				mats:SetIcon( node:GetIcon() )
 				mats.offset = offset
-				mats.OnNodeSelected = function( self, node )
-					OnSndNodeSelected( self, node, self.Text, node:GetFolder(), node:GetPathID(), node:GetIcon(), ViewPanel, pnlContent )
+				mats.OnNodeSelected = function( mats_self, mats_node )
+					OnSndNodeSelected( mats_self, mats_node, mats_self.Text, mats_node:GetFolder(), mats_node:GetPathID(), mats_node:GetIcon(), ViewPanel, pnlContent )
 				end
 			end
 			node.Done = true
@@ -134,7 +134,7 @@ local function OnSndNodeSelected( self, node, name, path, pathid, icon, ViewPane
 		if ( k <= offset ) then continue end
 
 		local p = Path .. "/"
-		if ( string.StartWith( path, "addons/" ) || string.StartWith( path, "download/" ) ) then
+		if ( string.StartWith( path, "addons/" ) or string.StartWith( path, "download/" ) ) then
 			p = string.sub( p, string.find( p, "/sound/" ) + 1 )
 		end
 
@@ -161,8 +161,8 @@ local function AddBrowseContentSnd( node, name, icon, path, pathid )
 	local sounds = node:AddFolder( name, path .. "sound", pathid, false, false, "*.*" )
 	sounds:SetIcon( icon )
 
-	sounds.OnNodeSelected = function( self, node )
-		OnSndNodeSelected( self, node, name, path, pathid, icon, ViewPanel, pnlContent )
+	sounds.OnNodeSelected = function( self, node_sel )
+		OnSndNodeSelected( self, node_sel, name, path, pathid, icon, ViewPanel, pnlContent )
 	end
 
 end
@@ -202,7 +202,7 @@ local browseGameSounds
 local browseAddonSounds
 hook.Add( "PopulateContent", "SpawnmenuLoadSomeSounds", function( pnlContent, tree, browseNode ) timer.Simple( 0.5, function()
 
-	if ( !IsValid( tree ) || !IsValid( pnlContent ) ) then
+	if ( !IsValid( tree ) or !IsValid( pnlContent ) ) then
 		print( "!!! Extended Spawnmenu: FAILED TO INITALIZE PopulateContent HOOK FOR SOUNDS !!!" )
 		print( "!!! Extended Spawnmenu: FAILED TO INITALIZE PopulateContent HOOK FOR SOUNDS !!!" )
 		print( "!!! Extended Spawnmenu: FAILED TO INITALIZE PopulateContent HOOK FOR SOUNDS !!!" )
@@ -324,7 +324,7 @@ spawnmenu.AddContentType( "material", function( container, obj )
 		surface.PlaySound( "garrysmod/ui_click.wav" )
 	end
 
-	icon.OpenMenu = function( icon )
+	icon.OpenMenu = function( icn )
 		local menu = DermaMenu()
 			menu:AddOption( "#spawnmenu.menu.copy", function() SetClipboardText( obj.spawnname ) end ):SetIcon( "icon16/page_copy.png" )
 
@@ -338,7 +338,7 @@ spawnmenu.AddContentType( "material", function( container, obj )
 			end ):SetIcon( "icon16/pencil.png" )
 
 			menu:AddSpacer()
-			menu:AddOption( "#spawnmenu.menu.delete", function() icon:Remove() hook.Run( "SpawnlistContentChanged", icon ) end ):SetIcon( "icon16/bin_closed.png" )
+			menu:AddOption( "#spawnmenu.menu.delete", function() icn:Remove() hook.Run( "SpawnlistContentChanged", icn ) end ):SetIcon( "icon16/bin_closed.png" )
 		menu:Open()
 	end
 
@@ -356,14 +356,14 @@ local function OnMatNodeSelected( self, node, name, path, pathid, icon, ViewPane
 
 	local Path = node:GetFolder()
 
-	local files = file.Find( Path .. "/*.vmt", node:GetPathID() )
-	files = table.Add( files, file.Find( Path .. "/*.png", node:GetPathID() ) )
+	local mat_files = file.Find( Path .. "/*.vmt", node:GetPathID() )
+	mat_files = table.Add( mat_files, file.Find( Path .. "/*.png", node:GetPathID() ) )
 
 	local offset = 0
 	local limit = 512
 	if ( node.offset ) then offset = node.offset or 0 end
 
-	for k, v in pairs( files ) do
+	for k, v in pairs( mat_files ) do
 		if ( k > limit + offset ) then
 			if ( !node.Done ) then
 				offset = offset + limit
@@ -374,8 +374,8 @@ local function OnMatNodeSelected( self, node, name, path, pathid, icon, ViewPane
 				mats:SetPathID( node:GetPathID() )
 				mats:SetIcon( node:GetIcon() )
 				mats.offset = offset
-				mats.OnNodeSelected = function( self, node )
-					OnMatNodeSelected( self, node, self.Text, node:GetFolder(), node:GetPathID(), node:GetIcon(), ViewPanel, pnlContent )
+				mats.OnNodeSelected = function( self_mats, node_sel )
+					OnMatNodeSelected( self_mats, node_sel, self_mats.Text, node_sel:GetFolder(), node_sel:GetPathID(), node_sel:GetIcon(), ViewPanel, pnlContent )
 				end
 			end
 			node.Done = true
@@ -383,7 +383,7 @@ local function OnMatNodeSelected( self, node, name, path, pathid, icon, ViewPane
 		if ( k <= offset ) then continue end
 
 		local p = Path .. "/"
-		if ( string.StartWith( path, "addons/" ) || string.StartWith( path, "download/" ) ) then
+		if ( string.StartWith( path, "addons/" ) or string.StartWith( path, "download/" ) ) then
 			p = string.sub( p, string.find( p, "/materials/" ) + 1 )
 		end
 
@@ -416,8 +416,8 @@ local function AddBrowseContentMaterial( node, name, icon, path, pathid )
 	local materials = node:AddFolder( name, path .. "materials", pathid, false, false, "*.*" )
 	materials:SetIcon( icon )
 
-	materials.OnNodeSelected = function( self, node )
-		OnMatNodeSelected( self, node, name, path, pathid, icon, ViewPanel, pnlContent )
+	materials.OnNodeSelected = function( self, node_sel )
+		OnMatNodeSelected( self, node_sel, name, path, pathid, icon, ViewPanel, pnlContent )
 	end
 
 end
@@ -458,7 +458,7 @@ local browseAddonMaterials
 local browseGameMaterials
 hook.Add( "PopulateContent", "SpawnmenuLoadSomeMaterials", function( pnlContent, tree, browseNode ) timer.Simple( 0.5, function()
 
-	if ( !IsValid( tree ) || !IsValid( pnlContent ) ) then
+	if ( !IsValid( tree ) or !IsValid( pnlContent ) ) then
 		print( "!!! Extended Spawnmenu: FAILED TO INITALIZE PopulateContent HOOK FOR MATERIALS!!!" )
 		print( "!!! Extended Spawnmenu: FAILED TO INITALIZE PopulateContent HOOK FOR MATERIALS!!!" )
 		print( "!!! Extended Spawnmenu: FAILED TO INITALIZE PopulateContent HOOK FOR MATERIALS!!!" )
@@ -561,7 +561,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_entities", function( pnlC
 
 	for CategoryName, v in SortedPairs( Categorised ) do
 
-		local node = node_w:AddNode( CategoryName, "icon16/bricks.png" )
+		local node_new = node_w:AddNode( CategoryName, "icon16/bricks.png" )
 
 		local CatPropPanel = vgui.Create( "ContentContainer", pnlContent )
 		CatPropPanel:SetVisible( false )
@@ -581,7 +581,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_entities", function( pnlC
 			spawnmenu.CreateContentIcon( ent.ScriptedEntityType or "entity", node_w.PropPanel, t )
 		end
 
-		function node:DoClick()
+		function node_new:DoClick()
 			pnlContent:SwitchPanel( CatPropPanel )
 		end
 
@@ -615,10 +615,9 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_post_processing", functio
 	end
 
 	-- Put table into panels
-
 	for CategoryName, v in SortedPairs( Categorised ) do
 
-		local node = node_w:AddNode( CategoryName, "icon16/picture.png" )
+		local node_new = node_w:AddNode( CategoryName, "icon16/picture.png" )
 
 		local CatPropPanel = vgui.Create( "ContentContainer", pnlContent )
 		CatPropPanel:SetVisible( false )
@@ -639,7 +638,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_post_processing", functio
 			spawnmenu.CreateContentIcon( "postprocess", node_w.PropPanel, t )
 		end
 
-		function node:DoClick()
+		function node_new:DoClick()
 			pnlContent:SwitchPanel( CatPropPanel )
 		end
 	end
@@ -672,7 +671,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_npcs", function( pnlConte
 
 	for CategoryName, v in SortedPairs( Categories ) do
 
-		local node = node_w:AddNode( CategoryName, "icon16/monkey.png" )
+		local node_new = node_w:AddNode( CategoryName, "icon16/monkey.png" )
 
 		local CatPropPanel = vgui.Create( "ContentContainer", pnlContent )
 		CatPropPanel:SetVisible( false )
@@ -693,7 +692,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_npcs", function( pnlConte
 			spawnmenu.CreateContentIcon( "npc", node_w.PropPanel, t )
 		end
 
-		function node:DoClick()
+		function node_new:DoClick()
 			pnlContent:SwitchPanel( CatPropPanel )
 		end
 
@@ -727,7 +726,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_vehicles", function( pnlC
 
 	for CategoryName, v in SortedPairs( Categorised ) do
 
-		local node = node_w:AddNode( CategoryName, "icon16/car.png" )
+		local node_new = node_w:AddNode( CategoryName, "icon16/car.png" )
 
 		local CatPropPanel = vgui.Create( "ContentContainer", pnlContent )
 		CatPropPanel:SetVisible( false )
@@ -747,7 +746,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_vehicles", function( pnlC
 			spawnmenu.CreateContentIcon( ent.ScriptedEntityType or "entity", CatPropPanel, t )
 		end
 
-		function node:DoClick()
+		function node_new:DoClick()
 			pnlContent:SwitchPanel( CatPropPanel )
 		end
 
@@ -778,7 +777,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_weapons", function( pnlCo
 	end
 
 	for CategoryName, v in SortedPairs( Categorised ) do
-		local node = node_w:AddNode( CategoryName, "icon16/gun.png" )
+		local node_new = node_w:AddNode( CategoryName, "icon16/gun.png" )
 
 		local CatPropPanel = vgui.Create( "ContentContainer", pnlContent )
 		CatPropPanel:SetVisible( false )
@@ -798,7 +797,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_weapons", function( pnlCo
 			spawnmenu.CreateContentIcon( ent.ScriptedEntityType or "weapon", node_w.PropPanel, t )
 		end
 
-		function node:DoClick()
+		function node_new:DoClick()
 			pnlContent:SwitchPanel( CatPropPanel )
 		end
 

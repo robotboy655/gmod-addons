@@ -9,7 +9,7 @@ local ConVars = {
 	pp_vol_light_dark = "0.8",
 	pp_vol_light_size = "5",
 	pp_vol_light_maxdistance = "1024"
- }
+}
 
 for k, v in pairs( ConVars ) do
 	CreateClientConVar( k, v )
@@ -247,7 +247,7 @@ function DrawVolLight( ent, mul, dark, size, distance, mindist )
 	local viewdiff = ( pos - EyePos() )
 	local viewdir = viewdiff:GetNormal()
 	local dot = ( viewdir:Dot( EyeVector() ) - 0.8 ) * 5
-	local dp = math.Clamp( ( ( 1.5 + dot ) * 0.666 ), 0, 1 )
+	local dp = math.Clamp( ( 1.5 + dot ) * 0.666, 0, 1 )
 	local Dist = EyePos():Distance( pos )
 	dot = dot * dp
 

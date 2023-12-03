@@ -151,7 +151,7 @@ local function MakeDTVarToggleProperty( class, tab )
 
 			if ( !isfunction( ent[ "Get" .. self.DTVariable ] ) ) then return end
 			if ( !isfunction( ent[ "Set" .. self.DTVariable ] ) ) then return end
-		
+
 			ent[ "Set" .. self.DTVariable ]( ent, !ent[ "Get" .. self.DTVariable ]( ent ) )
 
 		end

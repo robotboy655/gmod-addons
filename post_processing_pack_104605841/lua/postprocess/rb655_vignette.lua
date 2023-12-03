@@ -36,7 +36,7 @@ language.Add( "rb655.vignette.maxalpha", "Max Transparency" )
 language.Add( "rb655.vignette.maxalpha.help", "Maximum transparency of the special vignette effects" )
 
 local m = Material( "robotboy655/vignette.png" )
-local m_w = Material( "robotboy655/vignette_white.png" )
+--local m_w = Material( "robotboy655/vignette_white.png" )
 local alpha_saved = 255
 
 hook.Add( "RenderScreenspaceEffects", "rb655_rendervignette", function()
@@ -76,8 +76,8 @@ hook.Add( "RenderScreenspaceEffects", "rb655_rendervignette", function()
 			filter = { LocalPlayer():GetViewEntity() }
 		} )
 
-		local alpha = math.Clamp( trace.HitPos:Distance( EyePos() ) * 1.5 - 16, 0, 255 )
-		alpha_saved = Lerp( .02, alpha_saved, alpha )
+		local alpha3 = math.Clamp( trace.HitPos:Distance( EyePos() ) * 1.5 - 16, 0, 255 )
+		alpha_saved = Lerp( .02, alpha_saved, alpha3 )
 		alpha2 = 255 - alpha_saved
 	end
 	alpha2 = math.min( alpha2, GetConVarNumber( "pp_vignette_maxalpha" ) )
@@ -125,7 +125,7 @@ list.Set( "PostProcess", "#rb655.vignette.name", { icon = "gui/postprocess/rb655
 
 	panel:AddControl( "CheckBox", { Label = "#rb655.vignette.underwater", Command = "pp_vignette_underwater", Help = true } )
 	panel:AddControl( "CheckBox", { Label = "#rb655.vignette.ceiling", Command = "pp_vignette_ceiling", Help = true } )
-	//panel:AddControl( "CheckBox", { Label = "#rb655.vignette.lights", Command = "pp_vignette_lights", Help = true } )
+	--panel:AddControl( "CheckBox", { Label = "#rb655.vignette.lights", Command = "pp_vignette_lights", Help = true } )
 	panel:AddControl( "Slider", { Label = "#rb655.vignette.maxalpha", Command = "pp_vignette_maxalpha", Min = "0", Max = "255", Help = true } )
 
 end } )

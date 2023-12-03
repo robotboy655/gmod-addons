@@ -346,7 +346,7 @@ function TOOL.BuildCPanel( panel, ent )
 				animList:InvalidateLayout()
 			end
 		end
-	
+
 	elseif ( !IsEntValid( ent ) ) then
 
 		panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.badent" } ):SetTextColor( clr_err )
@@ -374,7 +374,7 @@ function TOOL.BuildCPanel( panel, ent )
 		if ( ent:GetNumPoseParameters() > 0 ) then
 			panel:ControlHelp( "#tool.rb655_easy_animation.poseparam.help" ):DockMargin( 32, 8, 32, 8 )
 		end
-	
+
 	elseif ( IsValid( ent ) && ent:GetClass() != "prop_animatable" && ent:GetNumPoseParameters() > 0 ) then
 		local errlbl = panel:ControlHelp( "#tool.rb655_easy_animation.poseparam.badent" )
 		errlbl:DockMargin( 32, 8, 32, 8 )

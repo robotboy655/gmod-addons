@@ -7,7 +7,7 @@ local ConVars = {
 	shoot = "1", shoot_mul = "0.05",
 	mouse = "1", mouse_mul = "10000",
 	view_punch = "1", view_punch_mul = "256"
- }
+}
 
 for k, v in pairs( ConVars ) do CreateClientConVar( "pp_motion_blur_" .. k, v ) end
 
@@ -58,7 +58,7 @@ hook.Add( "GetMotionBlurValues", "rb655_RenderMotionBlurPP", function( x, y, fwd
 	if ( IsValid( ply:GetVehicle() ) ) then e = ply:GetVehicle() end
 
 	if ( GetConVarNumber( "pp_motion_blur_vel_adv" ) == 1 ) then
-		local aim = e:GetForward()
+		--local aim = e:GetForward()
 		local vel = e:GetVelocity()
 
 		local len = e:GetVelocity():Length()
@@ -108,7 +108,7 @@ hook.Add( "GetMotionBlurValues", "rb655_RenderMotionBlurPP", function( x, y, fwd
 	end
 
 	if ( GetConVarNumber( "pp_motion_blur_view_punch" ) == 1 ) then
-		local ang = ply:GetPunchAngle()
+		local ang = ply:GetViewPunchAngles()
 
 		x = x + math.max( math.min( ang.y / GetConVarNumber( "pp_motion_blur_view_punch_mul" ), 0.5 ), -0.5 )
 		y = y + math.max( math.min( ang.p / GetConVarNumber( "pp_motion_blur_view_punch_mul" ), 0.5 ), -0.5 )

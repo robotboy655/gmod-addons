@@ -495,7 +495,7 @@ function TOOL.BuildCPanel( panel )
 			local btn = s:Add( "DButton" )
 			btn:SetText( "Undo " .. v:GetModel():sub( 8 ) .. "#" .. v:EntIndex() )
 			btn:Dock( TOP )
-			btn:SetToolTip( "#tool.rb655_easy_bonemerge.undo.tooltip" )
+			btn:SetTooltip( "#tool.rb655_easy_bonemerge.undo.tooltip" )
 			btn:DockMargin( 5, 5, 5, 0 )
 			btn.bonemergeButton = true
 			btn.ent = v

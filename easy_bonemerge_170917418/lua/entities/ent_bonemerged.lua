@@ -4,14 +4,6 @@ AddCSLuaFile()
 ENT.Base = "base_anim"
 ENT.Type = "anim"
 
---[[
-function ENT:Initialize() end
-function ENT:Think() end
-function ENT:PreEntityCopy() end
-function ENT:PostEntityCopy() end
-function ENT:PostEntityPaste() end
-]]
-
 function ENT:PhysicsUpdatePatch( physobj )
 
 	if ( CLIENT ) then return end
