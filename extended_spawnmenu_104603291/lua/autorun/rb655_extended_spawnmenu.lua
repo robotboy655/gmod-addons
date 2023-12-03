@@ -169,16 +169,6 @@ end
 
 language.Add( "spawnmenu.category.browsesounds", "Browse Sounds" )
 
-local addon_sounds = {}
-local files, folders = file.Find( "addons/*", "GAME" )
-for _, addon in SortedPairs( folders ) do
-
-	if ( !file.IsDir( "addons/" .. addon .. "/sound/", "GAME" ) ) then continue end
-
-	table.insert( addon_sounds, addon )
-
-end
-
 local function RefreshAddonSounds( browseAddonSounds )
 		for _, addon in SortedPairsByMemberValue( engine.GetAddons(), "title" ) do
 
@@ -225,6 +215,16 @@ hook.Add( "PopulateContent", "SpawnmenuLoadSomeSounds", function( pnlContent, tr
 	RefreshAddonSounds( browseAddonSounds )
 
 	--[[ --------------------------------------------------------------------------------------- ]]
+
+	local addon_sounds = {}
+	local _, snd_folders = file.Find( "addons/*", "GAME" )
+	for _, addon in SortedPairs( snd_folders ) do
+
+		if ( !file.IsDir( "addons/" .. addon .. "/sound/", "GAME" ) ) then continue end
+
+		table.insert( addon_sounds, addon )
+
+	end
 
 	local browseLegacySounds = browseSounds:AddNode( "#spawnmenu.category.addonslegacy", "icon16/folder_database.png" )
 	browseLegacySounds.ViewPanel = ViewPanel
@@ -424,16 +424,6 @@ end
 
 language.Add( "spawnmenu.category.browsematerials", "Browse Materials" )
 
-local addon_mats = {}
-local files, folders = file.Find( "addons/*", "GAME" )
-for _, addon in SortedPairs( folders ) do
-
-	if ( !file.IsDir( "addons/" .. addon .. "/materials/", "GAME" ) ) then continue end
-
-	table.insert( addon_mats, addon )
-
-end
-
 local function RefreshAddonMaterials( node )
 	for _, addon in SortedPairsByMemberValue( engine.GetAddons(), "title" ) do
 
@@ -481,6 +471,16 @@ hook.Add( "PopulateContent", "SpawnmenuLoadSomeMaterials", function( pnlContent,
 	RefreshAddonMaterials( browseAddonMaterials )
 
 	--[[ --------------------------------------------------------------------------------------- ]]
+
+	local addon_mats = {}
+	local _, mat_folders = file.Find( "addons/*", "GAME" )
+	for _, addon in SortedPairs( mat_folders ) do
+
+		if ( !file.IsDir( "addons/" .. addon .. "/materials/", "GAME" ) ) then continue end
+
+		table.insert( addon_mats, addon )
+
+	end
 
 	local browseLegacyMaterials = browseMaterials:AddNode( "#spawnmenu.category.addonslegacy", "icon16/folder_database.png" )
 	browseLegacyMaterials.ViewPanel = ViewPanel
