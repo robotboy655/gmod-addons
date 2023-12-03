@@ -11,7 +11,7 @@ echo WORKSHOP ID IS %id%
 
 echo.
 echo Creating GMA
-call gmad create -folder %cd% -out %id%.gma -quiet
+call gmad create -folder %p% -out %id%.gma -quiet
 
 echo.
 echo Uploading GMA
