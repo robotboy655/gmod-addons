@@ -43,54 +43,61 @@ local EnableIcon = "icon16/tick.png"
 local DisableIcon = "icon16/cross.png"
 local ToggleIcon = "icon16/arrow_switch.png"
 
-local SyncFuncs = {}
+if ( SERVER ) then
 
-SyncFuncs.prop_door_rotating = function( ent )
-	ent:SetNWBool( "Locked", ent:GetSaveTable().m_bLocked )
-	local state = ent:GetSaveTable().m_eDoorState
-	ent:SetNWBool( "Closed", state == 0 or state == 3 )
-end
-SyncFuncs.func_door = function( ent )
-	ent:SetNWBool( "Locked", ent:GetSaveTable().m_bLocked )
-	--[[local state = ent:GetSaveTable().m_eDoorState
-	ent:SetNWBool( "Closed", state == 0 or state == 3 )]]
-end
-SyncFuncs.func_door_rotating = function( ent )
-	ent:SetNWBool( "Locked", ent:GetSaveTable().m_bLocked )
-	--[[local state = ent:GetSaveTable().m_eDoorState
-	ent:SetNWBool( "Closed", state == 0 or state == 3 )]]
-end
-SyncFuncs.prop_vehicle_jeep = function( ent )
-	ent:SetNWBool( "Locked", ent:GetSaveTable().VehicleLocked )
-	ent:SetNWBool( "HasDriver", IsValid( ent:GetDriver() ) )
-	ent:SetNWBool( "m_bRadarEnabled", ent:GetSaveTable().m_bRadarEnabled )
-end
-SyncFuncs.prop_vehicle_airboat = function( ent )
-	ent:SetNWBool( "Locked", ent:GetSaveTable().VehicleLocked )
-	ent:SetNWBool( "HasDriver", IsValid( ent:GetDriver() ) )
-end
---[[SyncFuncs.prop_vehicle_prisoner_pod = function( ent )
-	ent:SetNWBool( "Locked", ent:GetSaveTable().VehicleLocked )
-	ent:SetNWBool( "HasDriver", IsValid( ent:GetDriver() ) )
-end]]
-SyncFuncs.func_tracktrain = function( ent )
-	ent:SetNWInt( "m_dir", ent:GetSaveTable().m_dir )
-	ent:SetNWBool( "m_moving", ent:GetSaveTable().speed != 0 )
-	--[[local driver = ent:GetDriver()
-	ent:SetNWBool( "HasDriver", IsValid( driver ) )]]
-end
+	local SyncFuncs = {}
 
-hook.Add( "Tick", "rb655_prop_sync", function()
-	if ( CLIENT ) then return end
-
-	for id, ply in pairs( player.GetAll() ) do
-		local ent = ply:GetEyeTrace().Entity
-		if ( !IsValid( ent ) ) then continue end
-		if ( SyncFuncs[ ent:GetClass() ] ) then
-			SyncFuncs[ ent:GetClass() ]( ent )
-		end
+	SyncFuncs.prop_door_rotating = function( ent )
+		ent:SetNWBool( "Locked", ent:GetSaveTable().m_bLocked )
+		local state = ent:GetSaveTable().m_eDoorState
+		ent:SetNWBool( "Closed", state == 0 or state == 3 )
 	end
-end )
+	SyncFuncs.func_door = function( ent )
+		ent:SetNWBool( "Locked", ent:GetSaveTable().m_bLocked )
+		--[[local state = ent:GetSaveTable().m_eDoorState
+		ent:SetNWBool( "Closed", state == 0 or state == 3 )]]
+	end
+	SyncFuncs.func_door_rotating = function( ent )
+		ent:SetNWBool( "Locked", ent:GetSaveTable().m_bLocked )
+		--[[local state = ent:GetSaveTable().m_eDoorState
+		ent:SetNWBool( "Closed", state == 0 or state == 3 )]]
+	end
+	SyncFuncs.prop_vehicle_jeep = function( ent )
+		ent:SetNWBool( "Locked", ent:GetSaveTable().VehicleLocked )
+		ent:SetNWBool( "HasDriver", IsValid( ent:GetDriver() ) )
+		ent:SetNWBool( "m_bRadarEnabled", ent:GetSaveTable().m_bRadarEnabled )
+	end
+	SyncFuncs.prop_vehicle_airboat = function( ent )
+		ent:SetNWBool( "Locked", ent:GetSaveTable().VehicleLocked )
+		ent:SetNWBool( "HasDriver", IsValid( ent:GetDriver() ) )
+	end
+	--[[SyncFuncs.prop_vehicle_prisoner_pod = function( ent )
+		ent:SetNWBool( "Locked", ent:GetSaveTable().VehicleLocked )
+		ent:SetNWBool( "HasDriver", IsValid( ent:GetDriver() ) )
+	end]]
+	SyncFuncs.func_tracktrain = function( ent )
+		ent:SetNWInt( "m_dir", ent:GetSaveTable().m_dir )
+		ent:SetNWBool( "m_moving", ent:GetSaveTable().speed != 0 )
+		--[[local driver = ent:GetDriver()
+		ent:SetNWBool( "HasDriver", IsValid( driver ) )]]
+	end
+
+	-- Periodically sync server data to clients.
+	local nextSync = 0
+	hook.Add( "Tick", "rb655_propperties_sync", function()
+		if ( CLIENT ) then return end
+
+		if ( nextSync > CurTime() ) then return end
+		nextSync = CurTime() + 1
+
+		for id, ent in pairs( ents.GetAll() ) do -- TODO: Swtich to ents.Iterator at some point!
+			if ( IsValid( ent ) && SyncFuncs[ ent:GetClass() ] ) then
+				SyncFuncs[ ent:GetClass() ]( ent )
+			end
+		end
+	end )
+
+end
 
 local e = 0
 local dissolver
