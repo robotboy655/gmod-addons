@@ -48,36 +48,36 @@ if ( SERVER ) then
 	local SyncFuncs = {}
 
 	SyncFuncs.prop_door_rotating = function( ent )
-		ent:SetNWBool( "Locked", ent:GetSaveTable().m_bLocked )
-		local state = ent:GetSaveTable().m_eDoorState
+		ent:SetNWBool( "Locked", ent:GetInternalVariable( "m_bLocked" ) )
+		local state = ent:GetInternalVariable( "m_eDoorState" )
 		ent:SetNWBool( "Closed", state == 0 or state == 3 )
 	end
 	SyncFuncs.func_door = function( ent )
-		ent:SetNWBool( "Locked", ent:GetSaveTable().m_bLocked )
-		--[[local state = ent:GetSaveTable().m_eDoorState
+		ent:SetNWBool( "Locked", ent:GetInternalVariable( "m_bLocked" ) )
+		--[[local state = ent:GetInternalVariable( "m_eDoorState" )
 		ent:SetNWBool( "Closed", state == 0 or state == 3 )]]
 	end
 	SyncFuncs.func_door_rotating = function( ent )
-		ent:SetNWBool( "Locked", ent:GetSaveTable().m_bLocked )
-		--[[local state = ent:GetSaveTable().m_eDoorState
+		ent:SetNWBool( "Locked", ent:GetInternalVariable( "m_bLocked" ) )
+		--[[local state = ent:GetInternalVariable( "m_eDoorState" )
 		ent:SetNWBool( "Closed", state == 0 or state == 3 )]]
 	end
 	SyncFuncs.prop_vehicle_jeep = function( ent )
-		ent:SetNWBool( "Locked", ent:GetSaveTable().VehicleLocked )
+		ent:SetNWBool( "Locked", ent:GetInternalVariable( "VehicleLocked" ) )
 		ent:SetNWBool( "HasDriver", IsValid( ent:GetDriver() ) )
-		ent:SetNWBool( "m_bRadarEnabled", ent:GetSaveTable().m_bRadarEnabled )
+		ent:SetNWBool( "m_bRadarEnabled", ent:GetInternalVariable( "m_bRadarEnabled" ) )
 	end
 	SyncFuncs.prop_vehicle_airboat = function( ent )
-		ent:SetNWBool( "Locked", ent:GetSaveTable().VehicleLocked )
+		ent:SetNWBool( "Locked", ent:GetInternalVariable( "VehicleLocked" ) )
 		ent:SetNWBool( "HasDriver", IsValid( ent:GetDriver() ) )
 	end
 	--[[SyncFuncs.prop_vehicle_prisoner_pod = function( ent )
-		ent:SetNWBool( "Locked", ent:GetSaveTable().VehicleLocked )
+		ent:SetNWBool( "Locked", ent:GetInternalVariable( "VehicleLocked" ) )
 		ent:SetNWBool( "HasDriver", IsValid( ent:GetDriver() ) )
 	end]]
 	SyncFuncs.func_tracktrain = function( ent )
-		ent:SetNWInt( "m_dir", ent:GetSaveTable().m_dir )
-		ent:SetNWBool( "m_moving", ent:GetSaveTable().speed != 0 )
+		ent:SetNWInt( "m_dir", ent:GetInternalVariable( "m_dir" ) )
+		ent:SetNWBool( "m_moving", ent:GetInternalVariable( "speed" ) != 0 )
 		--[[local driver = ent:GetDriver()
 		ent:SetNWBool( "HasDriver", IsValid( driver ) )]]
 	end
