@@ -22,6 +22,12 @@ if ( SERVER ) then
 			if ( oldent:GetManipulateBonePosition( i ) != newEntity:GetManipulateBonePosition( i ) ) then newEntity:ManipulateBonePosition( i, oldent:GetManipulateBonePosition( i ) ) end
 			if ( oldent:GetManipulateBoneJiggle( i ) != newEntity:GetManipulateBoneJiggle( i ) ) then newEntity:ManipulateBoneJiggle( i, oldent:GetManipulateBoneJiggle( i ) ) end
 		end
+		for i = 0, 31 do
+			local mat = oldent:GetSubMaterial( i )
+			if ( mat:len() > 0 ) then
+				newEntity:SetSubMaterial( i, mat )
+			end
+		end
 
 		newEntity:Spawn()
 
@@ -348,6 +354,13 @@ function TOOL:UpdateGhostEntity( ent, ply, tr )
 		if ( trEnt:GetManipulateBoneAngles( i ) != ent:GetManipulateBoneAngles( i ) ) then ent:ManipulateBoneAngles( i, trEnt:GetManipulateBoneAngles( i ) ) end
 		if ( trEnt:GetManipulateBonePosition( i ) != ent:GetManipulateBonePosition( i ) ) then ent:ManipulateBonePosition( i, trEnt:GetManipulateBonePosition( i ) ) end
 		if ( trEnt:GetManipulateBoneJiggle( i ) != ent:GetManipulateBoneJiggle( i ) ) then ent:ManipulateBoneJiggle( i, trEnt:GetManipulateBoneJiggle( i ) ) end
+	end
+
+	for i = 0, 31 do
+		local mat = trEnt:GetSubMaterial( i )
+		if ( mat:len() > 0 ) then
+			ent:SetSubMaterial( i, mat )
+		end
 	end
 end
 
