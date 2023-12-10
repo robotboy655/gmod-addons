@@ -371,6 +371,20 @@ AddInfoFunc( {
 	end
 } )
 AddInfoFunc( {
+	name = "World Axis-Aligned Bounds",
+	func = function( ent, labels, dirs )
+
+		local mins, maxs = ent:WorldSpaceAABB()
+
+		cam.Start3D( EyePos(), EyeAngles() )
+			renderDrawBox( vector_origin, angle_zero, mins, maxs )
+		cam.End3D()
+
+		if ( !labels ) then return end
+		renderBoxDimensions( vector_origin, angle_zero, mins, maxs )
+	end
+} )
+AddInfoFunc( {
 	name = "Render Bounds",
 	func = function( ent, labels, dirs )
 		local mins, maxs = ent:GetRenderBounds()
