@@ -3,9 +3,6 @@ TOOL.Category = "Robotboy655"
 TOOL.Name = "#tool.rb655_easy_animation.name"
 TOOL.AnimationArray = {}
 
-local gLastSelecetedEntity = NULL
-TOOL.SelecetedEntity = NULL
-
 TOOL.ClientConVar[ "anim" ] = ""
 TOOL.ClientConVar[ "speed" ] = "1.0"
 TOOL.ClientConVar[ "delay" ] = "0"
@@ -73,16 +70,15 @@ function PlayAnimation( ply, ent, anim, speed, delay, loop, isPreview )
 	end )
 end
 
-function TOOL:GetSelecetedEntity()
-	return self:GetWeapon():GetNWEntity( 1, self.SelecetedEntity )
+function TOOL:GetSelectedEntity()
+	return self:GetWeapon():GetNWEntity( 1 )
 end
 
-function TOOL:SetSelecetedEntity( ent )
+function TOOL:SetSelectedEntity( ent )
 	if ( IsValid( ent ) && ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
 	if ( !IsValid( ent ) ) then ent = NULL end
 
-	if ( self:GetSelecetedEntity() == ent ) then return end
-	self.SelecetedEntity = ent
+	if ( self:GetSelectedEntity() == ent ) then return end
 
 	self:GetWeapon():SetNWEntity( 1, ent )
 end
@@ -90,9 +86,10 @@ end
 local gOldCVar1 = GetConVarNumber( "ai_disabled" )
 local gOldCVar2 = GetConVarNumber( "rb655_easy_animation_nohide" )
 
+local gLastSelectedEntity = NULL
 function TOOL:Think()
-	local ent = self:GetSelecetedEntity()
-	if ( !IsValid( ent ) ) then self:SetSelecetedEntity( NULL ) end
+	local ent = self:GetSelectedEntity()
+	if ( !IsValid( ent ) ) then self:SetSelectedEntity( NULL ) end
 
 	if ( CLIENT ) then
 		if ( gOldCVar1 != GetConVarNumber( "ai_disabled" ) or gOldCVar2 != GetConVarNumber( "rb655_easy_animation_nohide" ) ) then
@@ -100,22 +97,22 @@ function TOOL:Think()
 			gOldCVar2 = GetConVarNumber( "rb655_easy_animation_nohide" )
 			if ( IsEntValid( ent ) && ent:IsNPC() ) then self:UpdateControlPanel() end
 		end
-		if ( ent:EntIndex() == gLastSelecetedEntity ) then return end
-		gLastSelecetedEntity = ent:EntIndex()
+		if ( ent:EntIndex() == gLastSelectedEntity ) then return end
+		gLastSelectedEntity = ent:EntIndex()
 		self:UpdateControlPanel()
 		RunConsoleCommand( "rb655_easy_animation_anim", "" )
 	end
 end
 
 function TOOL:RightClick( trace )
-	if ( SERVER ) then self:SetSelecetedEntity( trace.Entity ) end
+	if ( SERVER ) then self:SetSelectedEntity( trace.Entity ) end
 	return true
 end
 
 function TOOL:Reload( trace )
 	if ( SERVER ) then
-		if ( #self.AnimationArray <= 0 && IsValid( self:GetSelecetedEntity() ) ) then
-			self:GetSelecetedEntity():SetPlaybackRate( 0 )
+		if ( #self.AnimationArray <= 0 && IsValid( self:GetSelectedEntity() ) ) then
+			self:GetSelectedEntity():SetPlaybackRate( 0 )
 		elseif ( #self.AnimationArray > 0 ) then
 			for id, t in pairs( self.AnimationArray ) do
 				if ( IsValid( t.ent ) ) then t.ent:SetPlaybackRate( 0 ) end
@@ -133,7 +130,7 @@ if ( SERVER ) then
 	util.AddNetworkString( "rb655_easy_animation_array" )
 
 	function TOOL:LeftClick( trace )
-		local ent = self:GetSelecetedEntity()
+		local ent = self:GetSelectedEntity()
 		local anim = self:GetClientInfo( "anim" )
 
 		for i = 0, UniqueID do timer.Remove( "rb655_animation_loop_" .. self:GetOwner():UniqueID() .. "-" .. i ) UniqueID = 0 end
@@ -156,7 +153,7 @@ if ( SERVER ) then
 		local tool = ply:GetTool( "rb655_easy_animation" )
 		if ( !tool ) then return end
 
-		local ent = tool:GetSelecetedEntity()
+		local ent = tool:GetSelectedEntity()
 		if ( !IsEntValid( ent ) ) then return end
 
 		for i = 0, UniqueID do timer.Remove( "rb655_animation_loop_" .. ply:UniqueID() .. "-" .. i ) UniqueID = 0 end
@@ -169,7 +166,7 @@ if ( SERVER ) then
 		local tool = ply:GetTool( "rb655_easy_animation" )
 		if ( !tool ) then return end
 
-		local ent = tool:GetSelecetedEntity()
+		local ent = tool:GetSelectedEntity()
 		if ( !IsEntValid( ent ) ) then return end
 
 		local pp_name = ent:GetPoseParameterName( math.floor( tonumber( args[ 1 ] ) ) )
@@ -181,7 +178,7 @@ if ( SERVER ) then
 	concommand.Add( "rb655_easy_animation_add", function( ply, cmd, args )
 		local tool = ply:GetTool( "rb655_easy_animation" )
 		if ( !tool ) then return end
-		local e = tool:GetSelecetedEntity()
+		local e = tool:GetSelectedEntity()
 		local a = tool:GetClientInfo( "anim" )
 		local s = tool:GetClientInfo( "speed" )
 		local d = tool:GetClientInfo( "delay" )
@@ -253,7 +250,7 @@ language.Add( "tool.rb655_easy_animation.property_ragdoll", "Make Ragdoll" )
 language.Add( "prop_animatable", "Animatable Entity" )
 
 function TOOL:GetStage()
-	if ( IsValid( self:GetSelecetedEntity() ) ) then return 1 end
+	if ( IsValid( self:GetSelectedEntity() ) ) then return 1 end
 	return 0
 end
 
@@ -268,7 +265,7 @@ function TOOL:UpdateControlPanel( index )
 	if ( !panel ) then MsgN( "Couldn't find rb655_easy_animation panel!" ) return end
 
 	panel:ClearControls()
-	self.BuildCPanel( panel, self:GetSelecetedEntity() )
+	self.BuildCPanel( panel, self:GetSelectedEntity() )
 end
 
 local clr_err = Color( 200, 0, 0 )
@@ -278,7 +275,7 @@ function TOOL.BuildCPanel( panel, ent )
 	local nohide = false
 
 	if ( tool ) then
-		if ( !IsValid( ent ) ) then ent = tool:GetSelecetedEntity() end
+		if ( !IsValid( ent ) ) then ent = tool:GetSelectedEntity() end
 		nohide = tool:GetClientNumber( "nohide" ) != 0
 	end
 
@@ -409,7 +406,7 @@ function TOOL.BuildCPanel( panel, ent )
 end
 
 function TOOL:DrawHUD()
-	local ent = self:GetSelecetedEntity()
+	local ent = self:GetSelectedEntity()
 	if ( !IsValid( ent ) or tobool( self:GetClientNumber( "noglow" ) ) ) then return end
 
 	local t = { ent }
