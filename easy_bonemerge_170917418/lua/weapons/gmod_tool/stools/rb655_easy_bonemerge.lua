@@ -431,7 +431,7 @@ language.Add( "tool.rb655_easy_bonemerge.noglow", "Don't render glow/halo around
 language.Add( "tool.rb655_easy_bonemerge.selected_undo", "Undo:" )
 language.Add( "tool.rb655_easy_bonemerge.noent", "No entity selected!" )
 language.Add( "tool.rb655_easy_bonemerge.nomodels", "No attached models!" )
-language.Add( "tool.rb655_easy_bonemerge.undo.tooltip", "Remove this attached model from selected entity." )
+language.Add( "tool.rb655_easy_bonemerge.undo.tooltip", "Remove this attached model from selected entity.\n\nRight click for more options." )
 
 function TOOL:GetStage()
 	if ( IsValid( self:GetSelectedEntity() ) ) then return 1 end
@@ -522,6 +522,16 @@ function TOOL.BuildCPanel( panel )
 				if ( LocalPlayer():GetTool( "rb655_easy_bodygroup" ) ) then
 					menu:AddOption( "Open bonemerged model in Easy Bodygroup Tool", function() ApplyToolToBonemerge( t.ent, "rb655_easy_bodygroup" ) end )
 				end
+
+				-- Unfortunately this does not work because the server checks if the player is actually looking at the entity..
+				--[[menu:AddOption( "Open entity context menu", function()
+					local tr = LocalPlayer():GetEyeTrace()
+					tr.Entity = t.ent
+					timer.Simple( 0.1, function()
+						properties.OpenEntityMenu( t.ent, tr )
+					end )
+				end )]]
+
 				-- TODO: Set color? Set material?
 				menu:Open()
 			end
