@@ -12,6 +12,17 @@ TOOL.Information = {
 	{ name = "right_use", stage = 0 },
 }
 
+-- These are fired by the engine itself, but GMod has no definitions for them
+sound.Add( {
+	name = "EDIT_END_AREA.NotCreating",
+	sound = "buttons/button10.wav"
+} )
+sound.Add( {
+	name = "EDIT_BEGIN_AREA.NotCreating",
+	sound = "buttons/button10.wav"
+} )
+
+
 local Attributes = { {
 		id = 1,
 		icon = "C",
@@ -103,60 +114,92 @@ local Attributes = { {
 	}*/ -- These 3 do not work properly
 }
 
-local ToolModes = { {
+local ToolModes = {
+	{
 		label = "CONNECT",
 		desc = "Create one way connections (Alt=Unmark)",
 		command = "nav_connect",
 		reload = "nav_unmark",
 		needs_marked_area = true
-	}, {
+	},
+	{
 		label = "DISCONNECT",
 		desc = "Disconnect two areas (Alt=Unmark)",
 		command = "nav_disconnect",
 		reload = "nav_unmark",
 		needs_marked_area = true
-	}, {
-		label = "MERGE",
-		desc = "Merge two areas into one (Alt=Unmark)",
-		command = "nav_merge",
-		reload = "nav_unmark",
-		needs_marked_area = true
-	}, {
+	},
+	{
 		label = "CREATE",
 		desc = "Create an area (Alt=Remove)",
 		twoStage = true,
 		command_start = "nav_begin_area",
 		command = "nav_end_area",
 		reload = "nav_delete"
-	}, {
+	},
+	{
+		twoStage = true,
+		label = "CREATE LADDER",
+		desc = "Create a ladder anywhere (Alt=Delete)",
+		reload = "nav_delete",
+		command_start = function( self, trace )
+			self:SetObject( 0, game.GetWorld(), trace.HitPos )
+		end,
+		command = function( self, trace )
+			local start = self:GetPos( 0 )
+			local endPos = trace.HitPos
+
+			-- Make the ladder face the player
+			-- Internally the Z axis is ignored!
+			local dir = ( self:GetOwner():GetPos() -  start ):GetNormalized()
+
+			navmesh.CreateNavLadder( start, endPos, 42, dir )
+
+			self:ClearObjects()
+		end
+	},
+	{
+		label = "QUCIK LADDER/FLIP",
+		desc = "Create ladder at a climbable surface (Alt=Flip ladder direction)",
+		command = "nav_build_ladder",
+		reload = "nav_ladder_flip"
+	},
+	{
 		label = "DELETE",
-		desc = "Delete an area",
+		desc = "Delete an area/ladder",
 		command = "nav_delete"
-	}, {
+	},
+	{
+		label = "MERGE",
+		desc = "Merge two areas into one (Alt=Unmark)",
+		command = "nav_merge",
+		reload = "nav_unmark",
+		needs_marked_area = true
+	},
+	{
 		label = "SPLIT",
 		desc = "Split area into two",
 		command = "nav_split"
-	}, {
+	},
+	{
 		label = "SUBDIVIDE",
 		desc = "Subdivide area into 4 areas",
 		command = "nav_subdivide"
-	}, {
+	},
+	{
 		needs_marked_area = true,
 		label = "SPLICE",
 		desc = "Create an area between other two (Alt=Unmark)",
 		command = "nav_splice",
 		reload = "nav_unmark"
-	}, {
-		label = "LADDER CREATE/FLIP",
-		desc = "Create ladder (Alt=Flip)",
-		command = "nav_build_ladder",
-		reload = "nav_ladder_flip"
-	}, {
+	},
+	{
 		label = "MARK WALKABLE",
 		desc = "Mark walkable space (Alt=Remove)",
 		command = "nav_mark_walkable",
 		reload = "nav_clear_walkable_marks"
-	}, {
+	},
+	{
 		label = "ATTRUBUTES",
 		desc = "Set or remove attributes from an area",
 		command = function( self )
@@ -182,7 +225,8 @@ local ToolModes = { {
 			end
 
 		end
-	}, {
+	},
+	{
 		label = "CORNER SELECT/DROP",
 		desc = "Select corners (Alt=Drop to ground)",
 		reload = "nav_corner_place_on_ground",
@@ -205,16 +249,13 @@ local ToolModes = { {
 				RunConsoleCommand( "nav_corner_select" )
 			end
 		end
-	}, {
+	},
+	{
 		label = "CORNER RAISE/LOWER",
 		desc = "Raise and lower selected corners",
 		command = "nav_corner_raise",
 		reload = "nav_corner_lower"
-	}/*, {
-		label = "CORNER DROP",
-		desc = "Drop corner(s) to ground",
-		command = "nav_corner_place_on_ground",
-	}*/
+	},
 }
 
 if ( SERVER ) then
@@ -242,12 +283,18 @@ function TOOL:LeftClick( trace )
 	end
 
 	if ( self:GetStage() == 0 && mode.twoStage ) then
-		if ( mode.command_start ) then RunConsoleCommand( mode.command_start ) end
+		if ( mode.command_start ) then
+			if ( isfunction( mode.command_start ) ) then
+				mode.command_start( self, trace )
+			else
+				RunConsoleCommand( mode.command_start )
+			end
+		end
 		self:SetStage( 1 )
 	else
 		if ( mode.command ) then
 			if ( isfunction( mode.command ) ) then
-				mode.command( self )
+				mode.command( self, trace )
 			else
 				RunConsoleCommand( mode.command )
 			end
@@ -379,7 +426,7 @@ function TOOL.BuildCPanel( panel )
 	panel:Help( "#tool.rb655_easy_navedit.desc" )
 
 	local listbox = panel:AddControl( "ListBox", { Label = "#tool.rb655_easy_navedit.type", Height = 17 + table.Count( ToolModes ) * 17 } )
-	for id, mode in SortedPairsByMemberValue( ToolModes, "label" ) do
+	for id, mode in pairs( ToolModes ) do
 		local line = listbox:AddLine( mode.label .. " - " .. mode.desc )
 		line.data = { rb655_easy_navedit_mode = id }
 
