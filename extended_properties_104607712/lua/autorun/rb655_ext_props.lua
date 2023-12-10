@@ -38,10 +38,8 @@ function AddEntFireProperty( name, label, pos, class, input, icon )
 	AddEntFunctionProperty( name, label, pos, class, function( e ) e:Fire( unpack( string.Explode( " ", input ) ) ) end, icon )
 end
 
-local ExplodeIcon = "icon16/bomb.png"
-local EnableIcon = "icon16/tick.png"
-local DisableIcon = "icon16/cross.png"
-local ToggleIcon = "icon16/arrow_switch.png"
+
+
 
 if ( SERVER ) then
 
@@ -99,30 +97,12 @@ if ( SERVER ) then
 
 end
 
-local e = 0
-local dissolver
-function rb655_dissolve( ent )
-	local phys = ent:GetPhysicsObject()
-	if ( IsValid( phys ) ) then phys:EnableGravity( false ) end
 
-	ent:SetName( "rb655_dissolve" .. e )
 
-	if ( !IsValid( dissolver ) ) then
-		dissolver = ents.Create( "env_entity_dissolver" )
-		dissolver:SetPos( ent:GetPos() )
-		dissolver:Spawn()
-		dissolver:Activate()
-		dissolver:SetKeyValue( "magnitude", 100 )
-		dissolver:SetKeyValue( "dissolvetype", 0 )
-	end
-	dissolver:Fire( "Dissolve", "rb655_dissolve" .. e )
-
-	timer.Create( "rb655_ep_cleanupDissolved", 60, 1, function()
-		if ( IsValid( dissolver ) ) then dissolver:Remove() end
-	end )
-
-	e = e + 1
-end
+local ExplodeIcon = "icon16/bomb.png"
+local EnableIcon = "icon16/tick.png"
+local DisableIcon = "icon16/cross.png"
+local ToggleIcon = "icon16/arrow_switch.png"
 
 -------------------------------------------------- Half - Life 2 Specific --------------------------------------------------
 
@@ -179,6 +159,33 @@ AddEntFireProperty( "rb655_breakable_break", "Break", 655, function( ent, ply )
 	return rb655_property_filter( { "func_breakable", "func_physbox", "prop_physics", "func_pushable" }, ent, ply )
 end, "Break", ExplodeIcon ) -- Do not include item_item_crate, it insta crashes the server, dunno why.
 
+
+
+local dissolve_id = 0
+local dissolver
+function rb655_dissolve( ent )
+	local phys = ent:GetPhysicsObject()
+	if ( IsValid( phys ) ) then phys:EnableGravity( false ) end
+
+	if ( !IsValid( dissolver ) ) then
+		dissolver = ents.Create( "env_entity_dissolver" )
+		dissolver:SetPos( ent:GetPos() )
+		dissolver:Spawn()
+		dissolver:Activate()
+		dissolver:SetKeyValue( "magnitude", 100 )
+		dissolver:SetKeyValue( "dissolvetype", 0 )
+	end
+
+	ent:SetName( "rb655_dissolve" .. dissolve_id )
+	dissolver:Fire( "Dissolve", "rb655_dissolve" .. dissolve_id )
+	dissolve_id = dissolve_id + 1
+
+	-- Clean it up if it is not being used for 60 seconds
+	timer.Create( "rb655_ep_cleanupDissolver", 60, 1, function()
+		if ( IsValid( dissolver ) ) then dissolver:Remove() end
+	end )
+end
+
 AddEntFunctionProperty( "rb655_dissolve", "Disintegrate", 657, function( ent, ply )
 	if ( ent:GetModel() && ent:GetModel():StartWith( "*" ) ) then return false end
 	if ( ent:IsPlayer() ) then return false end
@@ -187,6 +194,8 @@ AddEntFunctionProperty( "rb655_dissolve", "Disintegrate", 657, function( ent, pl
 end, function( ent )
 	rb655_dissolve( ent )
 end, "icon16/wand.png" )
+
+
 
 AddEntFireProperty( "rb655_turret_toggle", "Toggle", 655, { "npc_combine_camera", "npc_turret_ceiling", "npc_turret_floor" }, "Toggle", ToggleIcon )
 AddEntFireProperty( "rb655_self_destruct", "Self Destruct", 656, { "npc_turret_floor", "npc_helicopter" }, "SelfDestruct", ExplodeIcon )
