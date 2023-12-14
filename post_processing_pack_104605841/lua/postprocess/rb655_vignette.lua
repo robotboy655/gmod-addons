@@ -83,7 +83,7 @@ hook.Add( "RenderScreenspaceEffects", "rb655_rendervignette", function()
 	alpha2 = math.min( alpha2, GetConVarNumber( "pp_vignette_maxalpha" ) )
 
 	local alpha3 = 0
-	/*if ( GetConVarNumber( "pp_vignette_lights" ) >= 1 ) then
+	--[[if ( GetConVarNumber( "pp_vignette_lights" ) >= 1 ) then
 		local light = render.ComputeLighting( LocalPlayer():GetShootPos(), LocalPlayer():GetAimVector() )
 		local light_a = light.x + light.y + light.z
 		alpha3 = 255 - (light_a * 128)
@@ -98,7 +98,7 @@ hook.Add( "RenderScreenspaceEffects", "rb655_rendervignette", function()
 		surface.SetDrawColor( l.x * 255, l.y * 255, l.z * 255, alpha4 )
 		surface.SetMaterial( m_w )
 		for i = 1, GetConVarNumber( "pp_vignette_passes" ) do surface.DrawTexturedRect( 0, 0, ScrW(), ScrH() ) end
-	end*/
+	end]]
 	alpha3 = math.min( alpha3, GetConVarNumber( "pp_vignette_maxalpha" ) )
 
 	local a = math.max( alpha, alpha1, alpha2, alpha3 )

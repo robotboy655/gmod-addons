@@ -63,7 +63,7 @@ local function renderDrawBox( pos, ang, min, max, bWire )
 	end
 
 	-- 3D2D experiment gone wrong
-	/*if ( GetConVarNumber( "rb655_easy_inspector_box_dim" ) < 1 ) then return end
+	--[[if ( GetConVarNumber( "rb655_easy_inspector_box_dim" ) < 1 ) then return end
 
 	-- Do not modify the original data
 	local pos = Vector( pos )
@@ -75,7 +75,7 @@ local function renderDrawBox( pos, ang, min, max, bWire )
 	ang:RotateAroundAxis( ang:Right(), -90 )
 	cam.Start3D2D( fwd, ang, .5 )
 		surface.SetDrawColor( 0, 0, 0, 255 )
-		//surface.DrawRect( 0, 0, 8, 8 )
+		--surface.DrawRect( 0, 0, 8, 8 )
 
 		draw.SimpleText( max.y - min.y, "rb655_attachment", 0, 0, color_white )
 	cam.End3D2D()
@@ -83,12 +83,12 @@ local function renderDrawBox( pos, ang, min, max, bWire )
 	ang:RotateAroundAxis( ang:Right(), -90 )
 	cam.Start3D2D( right, ang, .5 )
 		surface.SetDrawColor( 0, 0, 0, 255 )
-		//surface.DrawRect( 0, 0, 8, 8 )
+		--surface.DrawRect( 0, 0, 8, 8 )
 
 		draw.SimpleText( max.x - min.x, "rb655_attachment", 0, 0, color_white )
 		draw.SimpleText( max.x - min.x, "rb655_attachment", 0, 0, color_white )
 		draw.SimpleText( max.x - min.x, "rb655_attachment", 0, 0, color_white )
-	cam.End3D2D()*/
+	cam.End3D2D()]]
 
 end
 
@@ -283,7 +283,8 @@ AddInfoFunc( {
 
 	end
 } )
-/*
+
+--[[
 AddInfoFunc( {
 	name = "Physics Box CL",
 	check = function( ent )
@@ -318,7 +319,7 @@ AddInfoFunc( {
 		cam.End3D()
 
 	end
-} )*/
+} )]]
 AddInfoFunc( {
 	name = "Hit Groups",
 	check = function( ent )
@@ -1140,17 +1141,17 @@ surface.CreateFont( "rb655_attachment", {
 
 function TOOL:DrawHUD( b )
 
-	/* THE HALO */
+	-- THE HALO
 	local ent = self:GetSelectedEntity()
 
 	if ( IsValid( ent ) && LocalPlayer():ShouldDrawLocalPlayer() && ent:GetClass() == "viewmodel" ) then ent = LocalPlayer():GetActiveWeapon() end
 
 	if ( !IsValid( ent ) ) then
 
-		/* THE WORLD FUNCS, These only work when we do not have an entity selected and only with world flag */
+		-- THE WORLD FUNCS, These only work when we do not have an entity selected and only with world flag
 		if ( !InfoFuncs[ self:GetSelectedFunc() ].world ) then return end
 
-		/*if ( InfoFuncs[ self:GetSelectedFunc() ].check ) then
+		--[[if ( InfoFuncs[ self:GetSelectedFunc() ].check ) then
 			local check = InfoFuncs[ self:GetSelectedFunc() ].check()
 			if ( check ) then
 				local pos = ent:LocalToWorld( ent:OBBCenter() ):ToScreen()
@@ -1161,7 +1162,7 @@ function TOOL:DrawHUD( b )
 
 				return
 			end
-		end*/
+		end]]
 		InfoFuncs[ self:GetSelectedFunc() ].func( game.GetWorld(), tobool( self:GetClientNumber( "names" ) ), tobool( self:GetClientNumber( "dir" ) ) )
 
 		return
@@ -1177,7 +1178,7 @@ function TOOL:DrawHUD( b )
 		halo.Add( t, HSVToColor( ( CurTime() * 3 ) % 360, math.abs( math.sin( CurTime() / 2 ) ), 1 ), 2, 2, 1 )
 	end
 
-	/* THE ENTITY FUNCS */
+	-- THE ENTITY FUNCS
 	if ( !LocalPlayer():ShouldDrawLocalPlayer() && ent == LocalPlayer() && tobool( self:GetClientNumber( "lp" ) ) ) then return end
 
 	if ( InfoFuncs[ self:GetSelectedFunc() ].check ) then

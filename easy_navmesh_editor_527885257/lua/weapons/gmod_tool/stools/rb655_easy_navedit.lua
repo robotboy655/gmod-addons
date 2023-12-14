@@ -99,7 +99,7 @@ local Attributes = { {
 		id = 32768,
 		icon = "C",
 		name = "CLIFF",
-	}/*, {
+	}--[[], {
 		id = 536870912,
 		icon = "F",
 		name = "FUNC COST",
@@ -111,7 +111,7 @@ local Attributes = { {
 		id = 2147483648,
 		icon = "B",
 		name = "NAV BLOCKER",
-	}*/ -- These 3 do not work properly
+	}]] -- These 3 do not work properly
 }
 
 local ToolModes = {
