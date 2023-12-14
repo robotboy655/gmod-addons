@@ -108,7 +108,7 @@ hook.Add( "RenderScreenspaceEffects", "rb655_rendervignette", function()
 
 	--The -1, -1, +1, +1 nonsense is to make sure that we don't get 1px lines not covered by the texture
 	--for i = 1, GetConVarNumber( "pp_vignette_passes" ) do surface.DrawTexturedRect( -1, -1, ScrW() + 2, ScrH() + 2 ) end
-	for i = 1, GetConVarNumber( "pp_vignette_passes" ) do render.DrawScreenQuad() end
+	for i = 1, GetConVarNumber( "pp_vignette_passes" ) do render.DrawScreenQuad( true ) end
 
 end )
 
