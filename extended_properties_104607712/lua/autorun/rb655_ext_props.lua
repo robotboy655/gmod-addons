@@ -584,6 +584,16 @@ if ( SERVER ) then
 	hook.Add( "OnEntityCreated", "rb655_properties_friently/hostile", function( ent )
 		if ( ent:IsNPC() ) then Rbt_ProcessOtherNPC( ent ) end
 	end )
+
+	hook.Add( "EntityRemoved", "rb655_properties_friently/hostile_remove", function( ent )
+		for id, fnpc in pairs( friendliedNPCs ) do
+			if ( !IsValid( fnpc ) or fnpc == ent ) then table.remove( friendliedNPCs, id ) break end
+		end
+
+		for id, fnpc in pairs( hostaliziedNPCs ) do
+			if ( !IsValid( fnpc ) or fnpc == ent ) then table.remove( hostaliziedNPCs, id ) break end
+		end
+	end )
 end
 
 AddEntFunctionProperty( "rb655_make_friendly", "Make Friendly", 652, function( ent )
