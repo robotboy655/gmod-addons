@@ -217,7 +217,7 @@ function PANEL:Compute()
 	self.WorkshopWasteFiles = {}
 	for id, fle in pairs( GetWorkshopLeftovers() ) do
 		self.WorkshopWaste = self.WorkshopWaste + ( file.Size( "addons/" .. fle, "MOD" ) or 0 )
-		table.insert( self.WorkshopWasteFiles, { "addons/" .. fle, ( file.Size( "addons/" .. fle, "MOD" ) or 0 ) } )
+		table.insert( self.WorkshopWasteFiles, { "addons/" .. fle, file.Size( "addons/" .. fle, "MOD" ) or 0 } )
 	end
 
 	-- -------------------------------------------
