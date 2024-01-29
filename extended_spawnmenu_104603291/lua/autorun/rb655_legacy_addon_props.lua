@@ -4,7 +4,6 @@ AddCSLuaFile()
 if ( SERVER ) then return end
 
 language.Add( "spawnmenu.category.addonslegacy", "Addons - Legacy" )
-language.Add( "spawnmenu.category.addonslegacy", "Addons - Legacy" )
 language.Add( "spawnmenu.category.downloads", "Downloads" )
 
 local function AddRecursive( pnl, folder )
@@ -34,27 +33,9 @@ local function CountRecursive( folder )
 	return val
 end
 
--- Calculate this as soon as we start, so the spawnmenu loading times are better.
-local files, folders = file.Find( "addons/*", "MOD" )
-local addons = {}
-for _, f in pairs( folders ) do
-
-	if ( !file.IsDir( "addons/" .. f .. "/models/", "MOD" ) ) then continue end
-
-	local count = CountRecursive( "addons/" .. f .. "/models/", "MOD" )
-	if ( count == 0 ) then continue end
-
-	table.insert( addons, {
-		name = f,
-		count = count,
-		path = "addons/" .. f .. "/models/"
-	} )
-
-end
-
 hook.Add( "PopulateContent", "LegacyAddonProps", function( pnlContent, tree, node )
 
-	if ( !IsValid( node ) || !IsValid( pnlContent ) ) then
+	if ( !IsValid( node ) or !IsValid( pnlContent ) ) then
 		print( "!!! Extended Spawnmenu: FAILED TO INITALIZE PopulateContent HOOK FOR LEGACY ADDONS!!!" )
 		print( "!!! Extended Spawnmenu: FAILED TO INITALIZE PopulateContent HOOK FOR LEGACY ADDONS!!!" )
 		print( "!!! Extended Spawnmenu: FAILED TO INITALIZE PopulateContent HOOK FOR LEGACY ADDONS!!!" )
@@ -63,6 +44,24 @@ hook.Add( "PopulateContent", "LegacyAddonProps", function( pnlContent, tree, nod
 
 	local ViewPanel = vgui.Create( "ContentContainer", pnlContent )
 	ViewPanel:SetVisible( false )
+
+	local addons = {}
+
+	local _files, folders = file.Find( "addons/*", "MOD" )
+	for _, f in pairs( folders ) do
+
+		if ( !file.IsDir( "addons/" .. f .. "/models/", "MOD" ) ) then continue end
+
+		local count = CountRecursive( "addons/" .. f .. "/models/", "MOD" )
+		if ( count == 0 ) then continue end
+
+		table.insert( addons, {
+			name = f,
+			count = count,
+			path = "addons/" .. f .. "/models/"
+		} )
+
+	end
 
 	local LegacyAddons = node:AddNode( "#spawnmenu.category.addonslegacy", "icon16/folder_database.png" )
 	for _, f in SortedPairsByMemberValue( addons, "name" ) do
@@ -84,15 +83,15 @@ hook.Add( "PopulateContent", "LegacyAddonProps", function( pnlContent, tree, nod
 	local Downloads = node:AddFolder( "#spawnmenu.category.downloads", "download/models", "MOD", false, false, "*.*" )
 	Downloads:SetIcon( "icon16/folder_database.png" )
 
-	Downloads.OnNodeSelected = function( self, node )
+	Downloads.OnNodeSelected = function( self, selectedNode )
 		ViewPanel:Clear( true )
 
-		local path = node:GetFolder()
+		local path = selectedNode:GetFolder()
 
 		if ( !string.EndsWith( path, "/" ) && string.len( path ) > 1 ) then path = path .. "/" end
 		local path_mdl = string.sub( path, string.find( path, "/models/" ) + 1 )
 
-		for k, v in pairs( file.Find( path .. "/*.mdl", node:GetPathID() ) ) do
+		for k, v in pairs( file.Find( path .. "/*.mdl", selectedNode:GetPathID() ) ) do
 
 			local cp = spawnmenu.GetContentType( "model" )
 			if ( cp ) then
@@ -117,7 +116,7 @@ concommand.Add( "extsm_addoninfo", function()
 	local sp = frame:Add( "DScrollPanel" )
 	sp:Dock( FILL )
 
-	local info = sp:Add( "rb655_addonInfo" )
+	sp:Add( "rb655_addonInfo" )
 end )
 
 hook.Add( "AddToolMenuCategories", "LegacyAddonPropsInfoCategory", function()
@@ -223,7 +222,7 @@ function PANEL:Compute()
 
 	-- -------------------------------------------
 
-	local files, folders = file.Find( "addons/*", "MOD" )
+	local _files, folders = file.Find( "addons/*", "MOD" )
 
 	self.LegacyAddons = {}
 	for k, v in pairs( folders or {} ) do
@@ -233,8 +232,8 @@ function PANEL:Compute()
 			self.LegacyAddons[ "addons/" .. v .. "/" ] = "Installed (Has Models)"
 		end
 
-		local a, b = file.Find( "addons/" .. v .. "/*", "MOD" )
-		if ( table.Count( b or {} ) < 1 ) then
+		local _fi, fo = file.Find( "addons/" .. v .. "/*", "MOD" )
+		if ( table.Count( fo or {} ) < 1 ) then
 			self.LegacyAddons[ "addons/" .. v .. "/" ] = "Installed (Empty)"
 		end
 
@@ -245,16 +244,16 @@ function PANEL:Compute()
 
 	-- -------------------------------------------
 
-	local files = file.Find( "cache/lua/*", "MOD" )  -- Too many files to count actual size!
-	self.LuaCacheSize = #files * 1400
-	self.LuaCacheFiles = #files
+	local luaFiles = file.Find( "cache/lua/*", "MOD" )  -- Too many files to count actual size!
+	self.LuaCacheSize = #luaFiles * 1400
+	self.LuaCacheFiles = #luaFiles
 
-	local files = file.Find( "cache/workshop/*", "MOD" )
+	local wsFiles = file.Find( "cache/workshop/*", "MOD" )
 	self.WSCacheSize = 0
-	for id, fle in pairs( files ) do
+	for id, fle in pairs( wsFiles ) do
 		self.WSCacheSize = self.WSCacheSize + ( file.Size( "cache/workshop/" .. fle, "MOD" ) or 0 )
 	end
-	self.WSCacheFiles = #files
+	self.WSCacheFiles = #wsFiles
 
 	self.Computed = true
 
@@ -279,11 +278,11 @@ function PANEL:Paint( w, h )
 
 	-- -----------------------
 
-	local tW, tH = DrawText( "~" .. GetSize( self.LuaCacheSize or 0 ) .. " (" .. self.LuaCacheFiles .. " files)", "AddonInfo_Small", 0, txtH + localH, Color( 220, 220, 220 ) )
+	tW, tH = DrawText( "~" .. GetSize( self.LuaCacheSize or 0 ) .. " (" .. self.LuaCacheFiles .. " files)", "AddonInfo_Small", 0, txtH + localH, Color( 220, 220, 220 ) )
 	localH = localH + tH
 	localW = math.max( localW, tW )
 
-	local tW, tH = DrawText( "~" .. GetSize( self.WSCacheSize or 0 ) .. " (" .. self.WSCacheFiles .. " files)", "AddonInfo_Small", 0, txtH + localH, Color( 220, 220, 220 ) )
+	tW, tH = DrawText( "~" .. GetSize( self.WSCacheSize or 0 ) .. " (" .. self.WSCacheFiles .. " files)", "AddonInfo_Small", 0, txtH + localH, Color( 220, 220, 220 ) )
 	localH = localH + tH
 	localW = math.max( localW, tW )
 
@@ -291,76 +290,76 @@ function PANEL:Paint( w, h )
 
 	localW = localW + 25
 
-	local tW, tH = DrawText( "Server Lua cache", "AddonInfo_Small", localW, txtH, color_white )
+	tW, tH = DrawText( "Server Lua cache", "AddonInfo_Small", localW, txtH, color_white )
 	txtH = txtH + tH
 
-	local tW, tH = DrawText( "Workshop download cache", "AddonInfo_Small", localW, txtH, color_white )
+	tW, tH = DrawText( "Workshop download cache", "AddonInfo_Small", localW, txtH, color_white )
 	txtH = txtH + tH
 
 	-- -------------------------------------------
 
 	txtH = txtH + ScreenScaleH( 8 )
-	local tW, tH = DrawText( "Workshop Subscriptions", "AddonInfo_Header", 0, txtH, color_white )
+	tW, tH = DrawText( "Workshop Subscriptions", "AddonInfo_Header", 0, txtH, color_white )
 	txtH = txtH + tH
 
 	-- -------------------------------------------
 
-	local tW, tH = DrawText( "Used Size:  ", "AddonInfo_Text", 0, txtH, color_white )
+	tW, tH = DrawText( "Used Size:  ", "AddonInfo_Text", 0, txtH, color_white )
 	local maxW = tW
 	txtH = txtH + tH
 
-	local tW, tH = DrawText( "Wasted Space:  ", "AddonInfo_Text", 0, txtH, color_white )
+	tW, tH = DrawText( "Wasted Space:  ", "AddonInfo_Text", 0, txtH, color_white )
 	maxW = math.max( maxW, tW )
 	txtH = txtH + tH
 
-	local tW, tH = DrawText( "Total Size:  ", "AddonInfo_Text", 0, txtH, color_white )
+	tW, tH = DrawText( "Total Size:  ", "AddonInfo_Text", 0, txtH, color_white )
 	maxW = math.max( maxW, tW )
 	txtH = txtH - tH * 2
 
 	-- -------------------------------------------
 
-	local tW, tH = DrawText( GetSize( ( self.WorkshopSize - self.WorkshopWaste ) or 0 ), "AddonInfo_Text", maxW, txtH, Color( 220, 220, 220 ) )
+	tW, tH = DrawText( GetSize( ( self.WorkshopSize - self.WorkshopWaste ) or 0 ), "AddonInfo_Text", maxW, txtH, Color( 220, 220, 220 ) )
 	txtH = txtH + tH
 
-	local tW, tH = DrawText( GetSize( self.WorkshopWaste or 0 ), "AddonInfo_Text", maxW, txtH, Color( 220, 220, 220 ) )
+	tW, tH = DrawText( GetSize( self.WorkshopWaste or 0 ), "AddonInfo_Text", maxW, txtH, Color( 220, 220, 220 ) )
 	txtH = txtH + tH
 
-	local tW, tH = DrawText( GetSize( self.WorkshopSize or 0 ), "AddonInfo_Text", maxW, txtH, Color( 220, 220, 220 ) )
+	tW, tH = DrawText( GetSize( self.WorkshopSize or 0 ), "AddonInfo_Text", maxW, txtH, Color( 220, 220, 220 ) )
 	txtH = txtH + tH * 2
 
 	-- -------------------------------------------
 
-	local tW, tH = DrawText( "Files that aren't used: ( Safe to delete )", "AddonInfo_Text", 0, txtH, color_white )
+	tW, tH = DrawText( "Files that aren't used: ( Safe to delete )", "AddonInfo_Text", 0, txtH, color_white )
 	txtH = txtH + tH
 
-	local localH = 0
-	local localW = 0
+	localH = 0
+	localW = 0
 	for id, t in pairs( self.WorkshopWasteFiles or {} ) do
-		local tW, tH = DrawText( GetSize( t[ 2 ] ) .. "    ", "AddonInfo_Small", 0, txtH + localH, Color( 220, 220, 220 ) )
+		tW, tH = DrawText( GetSize( t[ 2 ] ) .. "    ", "AddonInfo_Small", 0, txtH + localH, Color( 220, 220, 220 ) )
 		localH = localH + tH
 		localW = math.max( localW, tW )
 	end
 
 	for id, t in pairs( self.WorkshopWasteFiles or {} ) do
-		local tW, tH = DrawText( t[ 1 ], "AddonInfo_Small", localW, txtH, color_white )
+		tW, tH = DrawText( t[ 1 ], "AddonInfo_Small", localW, txtH, color_white )
 		txtH = txtH + tH
 	end
 
 	-- -------------------------------------------
 
-	local tW, tH = DrawText( "Legacy Addons", "AddonInfo_Header", 0, txtH + ScreenScaleH( 8 ), color_white )
+	tW, tH = DrawText( "Legacy Addons", "AddonInfo_Header", 0, txtH + ScreenScaleH( 8 ), color_white )
 	txtH = txtH + tH + ScreenScaleH( 8 )
 
 	-- -------------------------------------------
 
-	local tW, tH = DrawText( "Legacy Addons with models:", "AddonInfo_Text", 0, txtH, color_white )
+	tW, tH = DrawText( "Legacy Addons with models:", "AddonInfo_Text", 0, txtH, color_white )
 	txtH = txtH + tH
 
 	if ( table.Count( self.LegacyAddons or {} ) > 0 ) then
 		local maxNameW = 0
 		local oldH = txtH
 		for path, status in pairs( self.LegacyAddons or {} ) do
-			local tW, tH = DrawText( path, "AddonInfo_Small", 0, txtH, color_white )
+			tW, tH = DrawText( path, "AddonInfo_Small", 0, txtH, color_white )
 			maxNameW = math.max( maxNameW, tW )
 			txtH = txtH + tH
 		end
@@ -369,24 +368,24 @@ function PANEL:Paint( w, h )
 		txtH = oldH
 
 		for path, status in pairs( self.LegacyAddons or {} ) do
-			local tW, tH = DrawText( status, "AddonInfo_Small", maxNameW, txtH, Color( 220, 220, 220 ) )
+			tW, tH = DrawText( status, "AddonInfo_Small", maxNameW, txtH, Color( 220, 220, 220 ) )
 			txtH = txtH + tH
 		end
 	else
-		local tW, tH = DrawText( "None.", "AddonInfo_Small", 0, txtH, color_white )
+		tW, tH = DrawText( "None.", "AddonInfo_Small", 0, txtH, color_white )
 		txtH = txtH + tH
 	end
 
 	if ( !system.IsWindows() ) then
 		txtH = txtH + tH
 
-		local tW, tH = DrawText( "OSX AND LINUX USERS BEWARE:", "AddonInfo_Text", 0, txtH, color_white )
+		tW, tH = DrawText( "OSX AND LINUX USERS BEWARE:", "AddonInfo_Text", 0, txtH, color_white )
 		txtH = txtH + tH
-		local tW, tH = DrawText( "MAKE SURE ALL FILE AND FOLDER NAMES", "AddonInfo_Text", 0, txtH, color_white )
+		tW, tH = DrawText( "MAKE SURE ALL FILE AND FOLDER NAMES", "AddonInfo_Text", 0, txtH, color_white )
 		txtH = txtH + tH
-		local tW, tH = DrawText( "IN ALL ADDONS ARE LOWERCASE ONLY", "AddonInfo_Text", 0, txtH, color_white )
+		tW, tH = DrawText( "IN ALL ADDONS ARE LOWERCASE ONLY", "AddonInfo_Text", 0, txtH, color_white )
 		txtH = txtH + tH
-		local tW, tH = DrawText( "INCLUDING ALL SUB FOLDERS", "AddonInfo_Text", 0, txtH, color_white )
+		tW, tH = DrawText( "INCLUDING ALL SUB FOLDERS", "AddonInfo_Text", 0, txtH, color_white )
 		txtH = txtH + tH
 	end
 
@@ -406,7 +405,7 @@ hook.Add( "PopulatePropMenu", "rb655_LoadLegacySpawnlists", function()
 
 	local sid = 0 --table.Count( spawnmenu.GetPropTable() )
 
-	local added = false
+	--local added = false
 
 	for id, spawnlist in pairs( file.Find( "settings/spawnlist/*.txt", "MOD" ) ) do
 		local content = file.Read( "settings/spawnlist/" .. spawnlist, "MOD" )
@@ -433,9 +432,9 @@ hook.Add( "PopulatePropMenu", "rb655_LoadLegacySpawnlists", function()
 
 		local contents = {}
 
-		for id, ply in pairs( content.entries ) do
-			if ( type( ply ) == "table" ) then ply = ply.model end
-			table.insert( contents, { type = "model", model = ply } )
+		for eid, entry in pairs( content.entries ) do
+			if ( type( entry ) == "table" ) then entry = entry.model end
+			table.insert( contents, { type = "model", model = entry } )
 		end
 
 		if ( !content.information ) then content.information = { name = spawnlist } end
