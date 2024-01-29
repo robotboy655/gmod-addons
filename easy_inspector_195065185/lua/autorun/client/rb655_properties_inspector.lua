@@ -409,7 +409,7 @@ function PANEL:OnNodeSelectedReal( tree, node, props )
 		local realVal = ""
 		local func = pnl[ k ]
 		if ( isfunction( func ) ) then
-			local a, b, c, d, e, f = func( pnl )
+			local a, b = func( pnl )
 			realVal = tostring( a ) .. " " .. tostring( b )
 		else
 			realVal = tostring( func )
