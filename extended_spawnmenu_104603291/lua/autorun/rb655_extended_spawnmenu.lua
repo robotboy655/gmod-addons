@@ -217,10 +217,10 @@ hook.Add( "PopulateContent", "SpawnmenuLoadSomeSounds", function( pnlContent, tr
 	--[[ --------------------------------------------------------------------------------------- ]]
 
 	local addon_sounds = {}
-	local _, snd_folders = file.Find( "addons/*", "GAME" )
+	local _, snd_folders = file.Find( "addons/*", "MOD" )
 	for _, addon in SortedPairs( snd_folders ) do
 
-		if ( !file.IsDir( "addons/" .. addon .. "/sound/", "GAME" ) ) then continue end
+		if ( !file.IsDir( "addons/" .. addon .. "/sound/", "MOD" ) ) then continue end
 
 		table.insert( addon_sounds, addon )
 
@@ -232,13 +232,13 @@ hook.Add( "PopulateContent", "SpawnmenuLoadSomeSounds", function( pnlContent, tr
 
 	for _, addon in SortedPairsByValue( addon_sounds ) do
 
-		AddBrowseContentSnd( browseLegacySounds, addon, "icon16/bricks.png", "addons/" .. addon .. "/", "GAME" )
+		AddBrowseContentSnd( browseLegacySounds, addon, "icon16/bricks.png", "addons/" .. addon .. "/", "MOD" )
 
 	end
 
 	--[[ --------------------------------------------------------------------------------------- ]]
 
-	AddBrowseContentSnd( browseSounds, "#spawnmenu.category.downloads", "icon16/folder_database.png", "download/", "GAME" )
+	AddBrowseContentSnd( browseSounds, "#spawnmenu.category.downloads", "icon16/folder_database.png", "download/", "MOD" )
 
 	--[[ --------------------------------------------------------------------------------------- ]]
 
@@ -473,10 +473,10 @@ hook.Add( "PopulateContent", "SpawnmenuLoadSomeMaterials", function( pnlContent,
 	--[[ --------------------------------------------------------------------------------------- ]]
 
 	local addon_mats = {}
-	local _, mat_folders = file.Find( "addons/*", "GAME" )
+	local _, mat_folders = file.Find( "addons/*", "MOD" )
 	for _, addon in SortedPairs( mat_folders ) do
 
-		if ( !file.IsDir( "addons/" .. addon .. "/materials/", "GAME" ) ) then continue end
+		if ( !file.IsDir( "addons/" .. addon .. "/materials/", "MOD" ) ) then continue end
 
 		table.insert( addon_mats, addon )
 
@@ -488,13 +488,13 @@ hook.Add( "PopulateContent", "SpawnmenuLoadSomeMaterials", function( pnlContent,
 
 	for _, addon in SortedPairsByValue( addon_mats ) do
 
-		AddBrowseContentMaterial( browseLegacyMaterials, addon, "icon16/bricks.png", "addons/" .. addon .. "/", "GAME" )
+		AddBrowseContentMaterial( browseLegacyMaterials, addon, "icon16/bricks.png", "addons/" .. addon .. "/", "MOD" )
 
 	end
 
 	--[[ --------------------------------------------------------------------------------------- ]]
 
-	AddBrowseContentMaterial( browseMaterials, "#spawnmenu.category.downloads", "icon16/folder_database.png", "download/", "GAME" )
+	AddBrowseContentMaterial( browseMaterials, "#spawnmenu.category.downloads", "icon16/folder_database.png", "download/", "MOD" )
 
 	--[[ --------------------------------------------------------------------------------------- ]]
 

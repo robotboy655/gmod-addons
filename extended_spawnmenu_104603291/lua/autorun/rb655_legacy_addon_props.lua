@@ -8,7 +8,7 @@ language.Add( "spawnmenu.category.addonslegacy", "Addons - Legacy" )
 language.Add( "spawnmenu.category.downloads", "Downloads" )
 
 local function AddRecursive( pnl, folder )
-	local files, folders = file.Find( folder .. "*", "GAME" )
+	local files, folders = file.Find( folder .. "*", "MOD" )
 
 	for k, v in pairs( files or {} ) do
 		if ( !string.EndsWith( v, ".mdl" ) ) then continue end
@@ -26,7 +26,7 @@ local function AddRecursive( pnl, folder )
 end
 
 local function CountRecursive( folder )
-	local files, folders = file.Find( folder .. "*", "GAME" )
+	local files, folders = file.Find( folder .. "*", "MOD" )
 	local val = 0
 
 	for k, v in pairs( files or {} ) do if ( string.EndsWith( v, ".mdl" ) ) then val = val + 1 end end
@@ -35,13 +35,13 @@ local function CountRecursive( folder )
 end
 
 -- Calculate this as soon as we start, so the spawnmenu loading times are better.
-local files, folders = file.Find( "addons/*", "GAME" )
+local files, folders = file.Find( "addons/*", "MOD" )
 local addons = {}
 for _, f in pairs( folders ) do
 
-	if ( !file.IsDir( "addons/" .. f .. "/models/", "GAME" ) ) then continue end
+	if ( !file.IsDir( "addons/" .. f .. "/models/", "MOD" ) ) then continue end
 
-	local count = CountRecursive( "addons/" .. f .. "/models/", "GAME" )
+	local count = CountRecursive( "addons/" .. f .. "/models/", "MOD" )
 	if ( count == 0 ) then continue end
 
 	table.insert( addons, {
@@ -78,10 +78,10 @@ hook.Add( "PopulateContent", "LegacyAddonProps", function( pnlContent, tree, nod
 
 	--[[ -------------------------- DOWNLOADS -------------------------- ]]
 
-	local fi, fo = file.Find( "download/models", "GAME" )
+	local fi, fo = file.Find( "download/models", "MOD" )
 	if ( !fi && !fo ) then return end
 
-	local Downloads = node:AddFolder( "#spawnmenu.category.downloads", "download/models", "GAME", false, false, "*.*" )
+	local Downloads = node:AddFolder( "#spawnmenu.category.downloads", "download/models", "MOD", false, false, "*.*" )
 	Downloads:SetIcon( "icon16/folder_database.png" )
 
 	Downloads.OnNodeSelected = function( self, node )
@@ -163,7 +163,7 @@ local function GetWorkshopLeftovers()
 	end
 
 	local t = {}
-	for id, fileh in pairs( file.Find( "addons/*.gma", "GAME" ) ) do
+	for id, fileh in pairs( file.Find( "addons/*.gma", "MOD" ) ) do
 		local a = string.StripExtension( fileh )
 		a = string.Explode( "_", a )
 		a = tonumber( a[ #a ] )
@@ -210,15 +210,15 @@ end
 function PANEL:Compute()
 
 	self.WorkshopSize = 0
-	for id, fle in pairs( file.Find( "addons/*.gma", "GAME" ) ) do
-		self.WorkshopSize = self.WorkshopSize + ( file.Size( "addons/" .. fle, "GAME" ) or 0 )
+	for id, fle in pairs( file.Find( "addons/*.gma", "MOD" ) ) do
+		self.WorkshopSize = self.WorkshopSize + ( file.Size( "addons/" .. fle, "MOD" ) or 0 )
 	end
 
 	self.WorkshopWaste = 0
 	self.WorkshopWasteFiles = {}
 	for id, fle in pairs( GetWorkshopLeftovers() ) do
-		self.WorkshopWaste = self.WorkshopWaste + ( file.Size( "addons/" .. fle, "GAME" ) or 0 )
-		table.insert( self.WorkshopWasteFiles, { "addons/" .. fle, ( file.Size( "addons/" .. fle, "GAME" ) or 0 ) } )
+		self.WorkshopWaste = self.WorkshopWaste + ( file.Size( "addons/" .. fle, "MOD" ) or 0 )
+		table.insert( self.WorkshopWasteFiles, { "addons/" .. fle, ( file.Size( "addons/" .. fle, "MOD" ) or 0 ) } )
 	end
 
 	-- -------------------------------------------
@@ -252,7 +252,7 @@ function PANEL:Compute()
 	local files = file.Find( "cache/workshop/*", "MOD" )
 	self.WSCacheSize = 0
 	for id, fle in pairs( files ) do
-		self.WSCacheSize = self.WSCacheSize + ( file.Size( "cache/workshop/" .. fle, "GAME" ) or 0 )
+		self.WSCacheSize = self.WSCacheSize + ( file.Size( "cache/workshop/" .. fle, "MOD" ) or 0 )
 	end
 	self.WSCacheFiles = #files
 
