@@ -146,7 +146,7 @@ concommand.Add( "pp_vol_light_edit", function()
 	local but_revert = vgui.Create( "DButton", frame )
 	but_revert:SetPos( 396, 170 )
 	but_revert:SetSize( 126, 30 )
-	but_revert:SetDisabled( true )
+	but_revert:SetEnabled( false )
 	but_revert:SetText( "#rb655.vol_light.revert" )
 	but_revert:SetTooltip( "#rb655.vol_light.revert.help" )
 	but_revert.DoClick = function()
@@ -178,7 +178,7 @@ concommand.Add( "pp_vol_light_edit", function()
 	local but_save = vgui.Create( "DButton", frame )
 	but_save:SetPos( 353, 205 )
 	but_save:SetSize( 82, 20 )
-	but_save:SetDisabled( true )
+	but_save:SetEnabled( false )
 	but_save:SetText( "#rb655.vol_light.save" )
 	but_save:SetTooltip( "#rb655.vol_light.save.help" )
 	but_save.DoClick = function()
@@ -204,8 +204,8 @@ concommand.Add( "pp_vol_light_edit", function()
 			pp_vol_light_entities[parent:GetLine( line ):GetValue( 1 )] = nil
 			parent:Clear()
 			for k, v in pairs( pp_vol_light_entities ) do classList:AddLine( k ) end
-			but_save:SetDisabled( true )
-			but_revert:SetDisabled( true )
+			but_save:SetEnabled( false )
+			but_revert:SetEnabled( false )
 
 			saveData()
 		end )
@@ -224,8 +224,8 @@ concommand.Add( "pp_vol_light_edit", function()
 		slider_maxdist:SetValue( t.maxdistance )
 		slider_mindist:SetValue( t.mindistance )
 
-		but_save:SetDisabled( false )
-		but_revert:SetDisabled( false )
+		but_save:SetEnabled( true )
+		but_revert:SetEnabled( true )
 	end
 end )
 
@@ -242,7 +242,7 @@ function DrawVolLight( ent, mul, dark, size, distance, mindist )
 		dista = Vector( scrpos.x, scrpos.y, 0 ):Distance( Vector( t.x, t.y, 0 ) )
 		if ( dista < mindist ) then break end
 	end
-	if ( dista > 0 && dista < mindist ) then return end
+	if ( dista > 0 and dista < mindist ) then return end
 
 	local viewdiff = ( pos - EyePos() )
 	local viewdir = viewdiff:GetNormal()
@@ -251,7 +251,7 @@ function DrawVolLight( ent, mul, dark, size, distance, mindist )
 	local Dist = EyePos():Distance( pos )
 	dot = dot * dp
 
-	if ( dot > 0 && Dist < distance ) then
+	if ( dot > 0 and Dist < distance ) then
 		DrawSunbeams( dark, ( mul * dot ) / math.Clamp( Dist / distance, 1, 100 * ( mul * dot ) ), size / Dist, scrpos.x / ScrW(), scrpos.y / ScrH() )
 		table.insert( pixelVisList, { x = scrpos.x, y = scrpos.y, c = cl } )
 	end
@@ -276,7 +276,7 @@ hook.Add( "RenderScreenspaceEffects", "rb655_rendervollight", function()
 
 	for k, v in pairs( ents.GetAll() ) do
 		if ( !IsValid( v ) or !pp_vol_light_entities[v:GetClass()] ) then continue end
-		if ( GetConVarNumber( "pp_vol_light_los" ) && VolLightTestLOS( LocalPlayer(), v ) ) then continue end
+		if ( GetConVarNumber( "pp_vol_light_los" ) and VolLightTestLOS( LocalPlayer(), v ) ) then continue end
 		if ( !pp_vol_light_entities[v:GetClass()].enabled ) then continue end
 
 		if ( GetConVarNumber( "pp_vol_light_override" ) ) then

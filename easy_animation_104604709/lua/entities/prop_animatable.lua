@@ -165,7 +165,7 @@ end
 function ENT:Think()
 
 	-- Clientside only because Velocity is 0 on server
-	if ( self:GetAnimateBodyXY() && CLIENT ) then
+	if ( self:GetAnimateBodyXY() and CLIENT ) then
 
 		local velocity = self:GetVelocity()
 		velocity.z = 0
@@ -212,10 +212,10 @@ if ( SERVER ) then return end
 
 function ENT:DrawBBox()
 
-	if ( GetConVarNumber( "rb655_easy_animation_noglow" ) != 0 || self:GetHideBBox() ) then return end
+	if ( GetConVarNumber( "rb655_easy_animation_noglow" ) != 0 or self:GetHideBBox() ) then return end
 
 	local wep = LocalPlayer():GetActiveWeapon()
-	if ( !IsValid( wep ) || wep:GetClass() != "gmod_tool" && wep:GetClass() != "weapon_physgun" ) then
+	if ( !IsValid( wep ) or wep:GetClass() != "gmod_tool" and wep:GetClass() != "weapon_physgun" ) then
 		return
 	end
 

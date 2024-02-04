@@ -18,7 +18,7 @@ local function MakeNiceName( str )
 		table.insert( newname, string.upper( string.Left( s, 1 ) ) .. string.Right( s, string.len( s ) - 1 ) ) -- Ugly way to capitalize first letters.
 	end
 
-	return string.Implode( " ", newname )
+	return table.concat( newname, " " )
 end
 
 local function IsEntValid( ent )
@@ -39,7 +39,7 @@ function TOOL:GetSelecetedEntity()
 end
 
 function TOOL:SetSelecetedEntity( ent )
-	if ( IsValid( ent ) && ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
+	if ( IsValid( ent ) and ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
 	if ( !IsValid( ent ) ) then ent = NULL end
 
 	if ( self:GetSelecetedEntity() == ent ) then return end
@@ -55,7 +55,7 @@ if ( SERVER ) then
 
 	net.Receive( "rb655_easy_bodygroup_ready", function( len, ply )
 		local tool = ply:GetTool( "rb655_easy_bodygroup" )
-		if ( tool && net.ReadEntity() == tool:GetSelecetedEntity() ) then tool.Ready = 1 end
+		if ( tool and net.ReadEntity() == tool:GetSelecetedEntity() ) then tool.Ready = 1 end
 	end )
 
 	--[[concommand.Add( "rb655_easy_bodygroup_group", function( ply, cmd, args )
@@ -85,7 +85,7 @@ function TOOL:Think()
 
 	if ( !IsEntValid( ent ) ) then return end
 	if ( self.Ready == 0 ) then return end
-	if ( self.Ready > 0 && self.Ready < 50 ) then self.Ready = self.Ready + 1 return end -- Another ugly workaround
+	if ( self.Ready > 0 and self.Ready < 50 ) then self.Ready = self.Ready + 1 return end -- Another ugly workaround
 
 	if ( ent:SkinCount() > 1 ) then ent:SetSkin( self:GetClientNumber( "skin" ) ) end
 
@@ -100,7 +100,7 @@ function TOOL:Think()
 end
 
 function TOOL:LeftClick( trace )
-	if ( SERVER && trace.Entity != self:GetSelecetedEntity() ) then
+	if ( SERVER and trace.Entity != self:GetSelecetedEntity() ) then
 		self.Ready = 0
 		self:SetSelecetedEntity( trace.Entity )
 	end

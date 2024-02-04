@@ -115,7 +115,7 @@ concommand.Add( "menu_achievements", function()
 	ach_hide:SetText( "#rb655.achievement_viewer.hide" )
 	function ach_hide:OnChange( val )
 		for id, pnl in pairs( ach_list:GetCanvas():GetChildren() ) do
-			if ( val && pnl:IsAchieved() ) then
+			if ( val and pnl:IsAchieved() ) then
 				pnl:SetVisible( false )
 			else
 				pnl:SetVisible( true )

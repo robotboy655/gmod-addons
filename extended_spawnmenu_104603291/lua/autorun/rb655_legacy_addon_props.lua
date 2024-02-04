@@ -24,12 +24,12 @@ local function AddRecursive( pnl, folder )
 	for k, v in pairs( folders or {} ) do AddRecursive( pnl, folder .. v .. "/" ) end
 end
 
-local function CountRecursive( folder )
-	local files, folders = file.Find( folder .. "*", "MOD" )
+local function CountRecursive( folder, path )
+	local files, folders = file.Find( folder .. "*", path )
 	local val = 0
 
 	for k, v in pairs( files or {} ) do if ( string.EndsWith( v, ".mdl" ) ) then val = val + 1 end end
-	for k, v in pairs( folders or {} ) do val = val + CountRecursive( folder .. v .. "/" ) end
+	for k, v in pairs( folders or {} ) do val = val + CountRecursive( folder .. v .. "/", path ) end
 	return val
 end
 
@@ -78,7 +78,7 @@ hook.Add( "PopulateContent", "LegacyAddonProps", function( pnlContent, tree, nod
 	--[[ -------------------------- DOWNLOADS -------------------------- ]]
 
 	local fi, fo = file.Find( "download/models", "MOD" )
-	if ( !fi && !fo ) then return end
+	if ( !fi and !fo ) then return end
 
 	local Downloads = node:AddFolder( "#spawnmenu.category.downloads", "download/models", "MOD", false, false, "*.*" )
 	Downloads:SetIcon( "icon16/folder_database.png" )
@@ -88,7 +88,7 @@ hook.Add( "PopulateContent", "LegacyAddonProps", function( pnlContent, tree, nod
 
 		local path = selectedNode:GetFolder()
 
-		if ( !string.EndsWith( path, "/" ) && string.len( path ) > 1 ) then path = path .. "/" end
+		if ( !string.EndsWith( path, "/" ) and string.len( path ) > 1 ) then path = path .. "/" end
 		local path_mdl = string.sub( path, string.find( path, "/models/" ) + 1 )
 
 		for k, v in pairs( file.Find( path .. "/*.mdl", selectedNode:GetPathID() ) ) do
@@ -237,7 +237,7 @@ function PANEL:Compute()
 			self.LegacyAddons[ "addons/" .. v .. "/" ] = "Installed (Empty)"
 		end
 
-		if ( !file.IsDir( "addons/" .. v .. "/models/", "MOD" ) && !file.IsDir(  "addons/" .. v .. "/materials/", "MOD" ) && !file.IsDir(  "addons/" .. v .. "/lua/", "MOD" ) && !file.IsDir(  "addons/" .. v .. "/sound/", "MOD" ) ) then
+		if ( !file.IsDir( "addons/" .. v .. "/models/", "MOD" ) and !file.IsDir(  "addons/" .. v .. "/materials/", "MOD" ) and !file.IsDir(  "addons/" .. v .. "/lua/", "MOD" ) and !file.IsDir(  "addons/" .. v .. "/sound/", "MOD" ) ) then
 			self.LegacyAddons[ "addons/" .. v .. "/" ] = "Installed Incorrectly!"
 		end
 	end

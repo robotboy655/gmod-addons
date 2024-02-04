@@ -17,7 +17,7 @@ local function AddProp( id, label, order, icon, func )
 		MenuIcon = icon,
 		Filter = function( self, ent, ply )
 			if ( !IsValid( ent ) or !gamemode.Call( "CanProperty", ply, id, ent ) ) then return false end
-			if ( CLIENT && GetConVarNumber( "developer" ) < 1 ) then return false end -- TODO: Remove?
+			if ( CLIENT and GetConVarNumber( "developer" ) < 1 ) then return false end -- TODO: Remove?
 			if ( func( ent ) ) then return true end
 			return false
 		end,

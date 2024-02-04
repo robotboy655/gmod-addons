@@ -21,7 +21,7 @@ local function MakeNiceName( str )
 		table.insert( newname, string.upper( string.Left( s, 1 ) ) .. string.Right( s, string.len( s ) - 1 ) ) -- Ugly way to capitalize first letters.
 	end
 
-	return string.Implode( " ", newname )
+	return table.concat( newname, " " )
 end
 
 local function IsEntValid( ent )
@@ -61,7 +61,7 @@ function PlayAnimation( ply, ent, anim, speed, delay, loop, isPreview )
 
 	timer.Create( tid, delay, 1, function()
 		PlayAnimationBase( ent, anim, speed )
-		if ( loop == true && IsValid( ent ) ) then
+		if ( loop == true and IsValid( ent ) ) then
 			timer.Adjust( tid, ent:SequenceDuration() / speed, 0, function()
 				if ( !IsValid( ent ) ) then timer.Remove( tid ) return end
 				PlayAnimationBase( ent, anim, speed )
@@ -75,7 +75,7 @@ function TOOL:GetSelectedEntity()
 end
 
 function TOOL:SetSelectedEntity( ent )
-	if ( IsValid( ent ) && ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
+	if ( IsValid( ent ) and ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
 	if ( !IsValid( ent ) ) then ent = NULL end
 
 	if ( self:GetSelectedEntity() == ent ) then return end
@@ -95,7 +95,7 @@ function TOOL:Think()
 		if ( gOldCVar1 != GetConVarNumber( "ai_disabled" ) or gOldCVar2 != GetConVarNumber( "rb655_easy_animation_nohide" ) ) then
 			gOldCVar1 = GetConVarNumber( "ai_disabled" )
 			gOldCVar2 = GetConVarNumber( "rb655_easy_animation_nohide" )
-			if ( IsEntValid( ent ) && ent:IsNPC() ) then self:UpdateControlPanel() end
+			if ( IsEntValid( ent ) and ent:IsNPC() ) then self:UpdateControlPanel() end
 		end
 		if ( ent:EntIndex() == gLastSelectedEntity ) then return end
 		gLastSelectedEntity = ent:EntIndex()
@@ -111,7 +111,7 @@ end
 
 function TOOL:Reload( trace )
 	if ( SERVER ) then
-		if ( #self.AnimationArray <= 0 && IsValid( self:GetSelectedEntity() ) ) then
+		if ( #self.AnimationArray <= 0 and IsValid( self:GetSelectedEntity() ) ) then
 			self:GetSelectedEntity():SetPlaybackRate( 0 )
 		elseif ( #self.AnimationArray > 0 ) then
 			for id, t in pairs( self.AnimationArray ) do
@@ -194,7 +194,7 @@ if ( SERVER ) then
 	concommand.Add( "rb655_easy_animation_rid", function( ply, cmd, args ) -- rid is for RemoveID
 		local tool = ply:GetTool( "rb655_easy_animation" )
 		if ( !tool.AnimationArray[ tonumber( args[ 1 ] ) ] ) then return end
-		if ( tool.AnimationArray[ tonumber( args[ 1 ] ) ].ei != tonumber( args[ 2 ] ) && tonumber( args[ 2 ] ) != 0 ) then return end
+		if ( tool.AnimationArray[ tonumber( args[ 1 ] ) ].ei != tonumber( args[ 2 ] ) and tonumber( args[ 2 ] ) != 0 ) then return end
 
 		table.remove( tool.AnimationArray, tonumber( args[ 1 ] ) )
 		net.Start( "rb655_easy_animation_array" )
@@ -271,7 +271,7 @@ end
 local clr_err = Color( 200, 0, 0 )
 function TOOL.BuildCPanel( panel, ent )
 
-	local tool = LocalPlayer() && LocalPlayer():GetTool( "rb655_easy_animation" )
+	local tool = LocalPlayer() and LocalPlayer():GetTool( "rb655_easy_animation" )
 	local nohide = false
 
 	if ( tool ) then
@@ -287,7 +287,7 @@ function TOOL.BuildCPanel( panel, ent )
 
 		local fine = true
 
-		if ( GetConVarNumber( "ai_disabled" ) == 0 && ent:IsNPC() ) then panel:AddControl( "Label", {Text = "#tool.rb655_easy_animation.ai"} ):SetTextColor( clr_err ) fine = false end
+		if ( GetConVarNumber( "ai_disabled" ) == 0 and ent:IsNPC() ) then panel:AddControl( "Label", {Text = "#tool.rb655_easy_animation.ai"} ):SetTextColor( clr_err ) fine = false end
 		if ( ent:GetClass() == "prop_ragdoll" ) then panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.ragdoll" } ):SetTextColor( clr_err ) fine = false end
 		if ( ent:GetClass() == "prop_physics" or ent:GetClass() == "prop_physics_multiplayer" or ent:GetClass() == "prop_physics_override" ) then panel:AddControl( "Label", { Text = "#tool.rb655_easy_animation.prop" } ):SetTextColor( clr_err ) end
 
@@ -298,10 +298,10 @@ function TOOL.BuildCPanel( panel, ent )
 			local isbad = false
 
 			for i, s in pairs( badStrings ) do if ( string.find( string.lower( v ), s, 1, true ) != nil ) then isbad = true break end end
-			if ( isbad == true && !nohide ) then continue end
+			if ( isbad == true and !nohide ) then continue end
 
 			for i, s in pairs( badBegginings ) do if ( s == string.Left( string.lower( v ), string.len( s ) ) ) then isbad = true break end end
-			if ( isbad == true && !nohide ) then continue end
+			if ( isbad == true and !nohide ) then continue end
 
 			language.Add( "rb655_anim_" .. v, MakeNiceName( v ) )
 			t[ "#rb655_anim_" .. v ] = { rb655_easy_animation_anim = v, rb655_easy_animation_anim_do = v }
@@ -350,7 +350,7 @@ function TOOL.BuildCPanel( panel, ent )
 
 	end
 
-	if ( IsValid( ent ) && ent:GetClass() == "prop_animatable" ) then
+	if ( IsValid( ent ) and ent:GetClass() == "prop_animatable" ) then
 		for k = 0, ent:GetNumPoseParameters() - 1 do
 			local min, max = ent:GetPoseParameterRange( k )
 			local name = ent:GetPoseParameterName( k )
@@ -372,7 +372,7 @@ function TOOL.BuildCPanel( panel, ent )
 			panel:ControlHelp( "#tool.rb655_easy_animation.poseparam.help" ):DockMargin( 32, 8, 32, 8 )
 		end
 
-	elseif ( IsValid( ent ) && ent:GetClass() != "prop_animatable" && ent:GetNumPoseParameters() > 0 ) then
+	elseif ( IsValid( ent ) and ent:GetClass() != "prop_animatable" and ent:GetNumPoseParameters() > 0 ) then
 		local errlbl = panel:ControlHelp( "#tool.rb655_easy_animation.poseparam.badent" )
 		errlbl:DockMargin( 32, 8, 32, 8 )
 		errlbl:SetTextColor( clr_err )
@@ -381,12 +381,12 @@ function TOOL.BuildCPanel( panel, ent )
 	local pnl = vgui.Create( "DPanelList" )
 	pnl:SetHeight( 225 )
 	pnl:EnableHorizontal( false )
-	pnl:EnableVerticalScrollbar( true )
+	pnl:EnableVerticalScrollbar()
 	pnl:SetSpacing( 2 )
 	pnl:SetPadding( 2 )
 	Derma_Hook( pnl, "Paint", "Paint", "Panel" ) -- Awesome GWEN background
 
-	if ( tool && tool.AnimationArray ) then
+	if ( tool and tool.AnimationArray ) then
 		for i, d in pairs( tool.AnimationArray ) do
 			local s = vgui.Create( "RAnimEntry" )
 			s:SetInfo( i, d.ent, d.anim, d.speed, d.delay, d.loop )

@@ -10,7 +10,7 @@ if ( SERVER ) then
 	local function ReplaceEntity( oldent )
 		local newEntity = ents.Create( "ent_bonemerged" )
 		newEntity:SetModel( oldent:GetModel() )
-		newEntity:SetSkin( oldent:GetSkin() || 0 )
+		newEntity:SetSkin( oldent:GetSkin() or 0 )
 		if ( oldent:GetFlexScale() != newEntity:GetFlexScale() ) then newEntity:SetFlexScale( oldent:GetFlexScale() ) end -- Don't create unnecessary entities
 		if ( oldent:GetNumBodyGroups() ) then
 			for id = 0, oldent:GetNumBodyGroups() - 1 do newEntity:SetBodygroup( id, oldent:GetBodygroup( id ) ) end
@@ -45,11 +45,11 @@ if ( SERVER ) then
 		if ( !constraint.HasConstraints( ent ) ) then return end
 
 		for _, v in pairs( constraint.GetAllConstrainedEntities( ent ) ) do
-			if ( v == ent || v:GetClass() == "ent_bonemerged" ) then continue end
+			if ( v == ent or v:GetClass() == "ent_bonemerged" ) then continue end
 			if ( constraint.FindConstraint( v, "EasyBonemergeParent" ) ) then continue end
 
 			local oldent = v
-			if ( IsValid( v ) && v:GetClass() == "prop_effect" ) then oldent = v.AttachedEntity end
+			if ( IsValid( v ) and v:GetClass() == "prop_effect" ) then oldent = v.AttachedEntity end
 
 			local newEntity = ReplaceEntity( oldent )
 
@@ -65,7 +65,7 @@ if ( SERVER ) then
 	-- Allows for bonemerging depth
 	local function rb655_CheckForBonemerges( oldent, newent )
 		for id, ent in pairs( ents.GetAll() ) do
-			if ( ent:GetParent() == oldent && ent:GetClass() == "ent_bonemerged" && !ent.LocalPos ) then
+			if ( ent:GetParent() == oldent and ent:GetClass() == "ent_bonemerged" and !ent.LocalPos ) then
 				rb655_ApplyBonemerge( ent, newent )
 			end
 		end
@@ -76,7 +76,7 @@ if ( SERVER ) then
 		if ( selectedEnt == ent ) then return end
 
 		local oldent = ent
-		if ( IsValid( ent ) && ent:GetClass() == "prop_effect" ) then oldent = ent.AttachedEntity end
+		if ( IsValid( ent ) and ent:GetClass() == "prop_effect" ) then oldent = ent.AttachedEntity end
 
 		local newEntity = ReplaceEntity( oldent )
 
@@ -94,7 +94,7 @@ if ( SERVER ) then
 		if ( !IsValid( Ent2 ) ) then MsgN( "Easy Bonemerge Tool: Your dupe/save is missing the bonemerged prop, cannot restore bonemerge effect!" ) return end
 
 		Ent2:SetParent( ent_parent, 0 )
-		if ( IsValid( ent_parent ) && ent_parent:GetClass() == "prop_effect" ) then
+		if ( IsValid( ent_parent ) and ent_parent:GetClass() == "prop_effect" ) then
 			Ent2:SetParent( ent_parent.AttachedEntity, 0 )
 			-- A horrible hack, but necessary
 			ent_parent.PhysicsUpdate = Ent2.PhysicsUpdatePatch
@@ -115,8 +115,8 @@ if ( SERVER ) then
 			Type = "EasyBonemerge",
 			Ent1 = ent_parent,
 			Ent2 = Ent2,
-			EntityMods = EntityMods || Ent2.EntityMods,
-			BoneMods = BoneMods || Ent2.BoneMods
+			EntityMods = EntityMods or Ent2.EntityMods,
+			BoneMods = BoneMods or Ent2.BoneMods
 		} )
 
 		duplicator.ApplyEntityModifiers( nil, Ent2 )
@@ -136,12 +136,12 @@ if ( SERVER ) then
 		if ( !IsValid( Ent2 ) ) then MsgN( "Easy Bonemerge Tool: Your dupe/save is missing parent bonemerged prop, cannot restore bonemerged prop!" ) return end
 
 		Ent2:SetParent( Ent1, 0 )
-		if ( IsValid( Ent1 ) && Ent1:GetClass() == "prop_effect" ) then Ent2:SetParent( Ent1.AttachedEntity, 0 ) end
+		if ( IsValid( Ent1 ) and Ent1:GetClass() == "prop_effect" ) then Ent2:SetParent( Ent1.AttachedEntity, 0 ) end
 
 		Ent2.BoneMergeParent = true
 
-		Ent2:SetLocalPos( LocalPos || Ent2.LocalPos )
-		Ent2:SetLocalAngles( LocalAng || Ent2.LocalAng )
+		Ent2:SetLocalPos( LocalPos or Ent2.LocalPos )
+		Ent2:SetLocalAngles( LocalAng or Ent2.LocalAng )
 
 		constraint.AddConstraintTable( Ent1, Ent2, Ent2 )
 
@@ -149,10 +149,10 @@ if ( SERVER ) then
 			Type = "EasyBonemergeParent",
 			Ent1 = Ent1,
 			Ent2 = Ent2,
-			LocalPos = LocalPos || Ent2.LocalPos,
-			LocalAng = LocalAng || Ent2.LocalAng,
-			EntityMods = EntityMods || Ent2.EntityMods,
-			BoneMods = BoneMods || Ent2.BoneMods
+			LocalPos = LocalPos or Ent2.LocalPos,
+			LocalAng = LocalAng or Ent2.LocalAng,
+			EntityMods = EntityMods or Ent2.EntityMods,
+			BoneMods = BoneMods or Ent2.BoneMods
 		} )
 
 		duplicator.ApplyEntityModifiers( nil, Ent2 )
@@ -168,11 +168,11 @@ if ( SERVER ) then
 	util.AddNetworkString( "rb655_bm_undo" )
 	net.Receive( "rb655_bm_undo", function( len, ply )
 		local ent = net.ReadEntity()
-		if ( !IsValid( ent ) || ent:GetClass() != "ent_bonemerged" ) then return end
+		if ( !IsValid( ent ) or ent:GetClass() != "ent_bonemerged" ) then return end
 
 		local parent = ent:GetParent()
 		if ( !IsValid( parent ) ) then return end
-		if ( parent:GetClass() == "prop_dynamic" && IsValid( parent:GetParent() ) ) then parent = parent:GetParent() end
+		if ( parent:GetClass() == "prop_dynamic" and IsValid( parent:GetParent() ) ) then parent = parent:GetParent() end
 
 		local tool = ply:GetTool( "rb655_easy_bonemerge" )
 		if ( !istable( tool ) ) then return end
@@ -187,11 +187,11 @@ if ( SERVER ) then
 	net.Receive( "rb655_bm_apply_tool", function( len, ply )
 		local ent = net.ReadEntity()
 		local tool = net.ReadString()
-		if ( !IsValid( ent ) || ent:GetClass() != "ent_bonemerged" ) then return end
+		if ( !IsValid( ent ) or ent:GetClass() != "ent_bonemerged" ) then return end
 
 		local parent = ent:GetParent()
 		if ( !IsValid( parent ) ) then return end
-		if ( parent:GetClass() == "prop_dynamic" && IsValid( parent:GetParent() ) ) then parent = parent:GetParent() end
+		if ( parent:GetClass() == "prop_dynamic" and IsValid( parent:GetParent() ) ) then parent = parent:GetParent() end
 
 		local toolBm = ply:GetTool( "rb655_easy_bonemerge" )
 		if ( !istable( toolBm ) ) then return end
@@ -223,11 +223,11 @@ end
 
 function TOOL:SetSelectedEntity( ent )
 	-- Cannot do this due to duplicator
-	-- if ( IsValid( ent ) && ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
+	-- if ( IsValid( ent ) and ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
 
 	if ( !IsValid( ent ) ) then ent = NULL end
-	if ( IsValid( ent ) && ent:GetModel():StartWith( "*" ) ) then ent = NULL end
-	if ( IsValid( ent ) && ent:IsPlayer() && ent != self:GetOwner() ) then ent = NULL end
+	if ( IsValid( ent ) and ent:GetModel():StartWith( "*" ) ) then ent = NULL end
+	if ( IsValid( ent ) and ent:IsPlayer() and ent != self:GetOwner() ) then ent = NULL end
 
 	if ( self:GetSelectedEntity() == ent ) then return end
 
@@ -236,10 +236,10 @@ end
 
 function TOOL:LeftClick( tr )
 	local ent = self:GetSelectedEntity()
-	if ( !IsValid( ent ) || !IsValid( tr.Entity ) || tr.Entity == ent || tr.Entity:IsPlayer() || tr.Entity:IsNPC() || tr.Entity:GetModel():StartWith( "*" ) ) then return false end
+	if ( !IsValid( ent ) or !IsValid( tr.Entity ) or tr.Entity == ent or tr.Entity:IsPlayer() or tr.Entity:IsNPC() or tr.Entity:GetModel():StartWith( "*" ) ) then return false end
 
-	if ( IsValid( tr.Entity ) && tr.Entity:GetClass() == "prop_effect" ) then tr.Entity = tr.Entity.AttachedEntity end
-	if ( !IsValid( ent ) || !IsValid( tr.Entity ) || tr.Entity == ent || tr.Entity:IsPlayer() || tr.Entity:IsNPC() || tr.Entity:GetModel():StartWith( "*" ) ) then return false end
+	if ( IsValid( tr.Entity ) and tr.Entity:GetClass() == "prop_effect" ) then tr.Entity = tr.Entity.AttachedEntity end
+	if ( !IsValid( ent ) or !IsValid( tr.Entity ) or tr.Entity == ent or tr.Entity:IsPlayer() or tr.Entity:IsNPC() or tr.Entity:GetModel():StartWith( "*" ) ) then return false end
 
 	if ( CLIENT ) then return true end
 
@@ -254,16 +254,16 @@ function TOOL:LeftClick( tr )
 end
 
 function TOOL:RightClick( tr )
-	local ent = !self:GetOwner():KeyDown( IN_USE ) && tr.Entity || self:GetOwner()
-	--if ( IsValid( ent ) && #( ent:GetAttachments() || {} ) < 1 ) then return false end
+	local ent = !self:GetOwner():KeyDown( IN_USE ) and tr.Entity or self:GetOwner()
+	--if ( IsValid( ent ) and #( ent:GetAttachments() or {} ) < 1 ) then return false end
 	if ( SERVER ) then self:SetSelectedEntity( ent ) end
 	return true
 end
 
 function TOOL:Reload( tr )
-	local ent = !self:GetOwner():KeyDown( IN_USE ) && tr.Entity || self:GetOwner()
+	local ent = !self:GetOwner():KeyDown( IN_USE ) and tr.Entity or self:GetOwner()
 	if ( !IsValid( ent ) ) then return false end
-	if ( SERVER --[[&& ( constraint.HasConstraints( ent, "EasyBonemerge" ) || constraint.HasConstraints( ent, "EasyBonemergeParent" ) )]] ) then
+	if ( SERVER --[[&& ( constraint.HasConstraints( ent, "EasyBonemerge" ) or constraint.HasConstraints( ent, "EasyBonemergeParent" ) )]] ) then
 		constraint.RemoveConstraints( ent, "EasyBonemerge" )
 		constraint.RemoveConstraints( ent, "EasyBonemergeParent" )
 	end
@@ -276,8 +276,8 @@ function TOOL:MakeGhostEntity( model, pos, angle )
 
 	-- We do ghosting serverside in single player
 	-- It's done clientside in multiplayer
-	if ( SERVER && !game.SinglePlayer() ) then return end
-	if ( CLIENT && game.SinglePlayer() ) then return end
+	if ( SERVER and !game.SinglePlayer() ) then return end
+	if ( CLIENT and game.SinglePlayer() ) then return end
 
 	-- Release the old ghost entity
 	self:ReleaseGhostEntity()
@@ -312,13 +312,13 @@ end
 
 function TOOL:UpdateGhostEntity( ent, ply, tr )
 	local selectedEnt = self:GetSelectedEntity()
-	if ( IsValid( selectedEnt ) && selectedEnt:GetClass() == "prop_effect" ) then selectedEnt = selectedEnt.AttachedEntity end
+	if ( IsValid( selectedEnt ) and selectedEnt:GetClass() == "prop_effect" ) then selectedEnt = selectedEnt.AttachedEntity end
 
-	if ( !IsValid( ent ) || !IsValid( selectedEnt ) ) then return end
+	if ( !IsValid( ent ) or !IsValid( selectedEnt ) ) then return end
 
 	local trEnt = tr.Entity
 
-	if ( !IsValid( trEnt ) || trEnt == selectedEnt ) then
+	if ( !IsValid( trEnt ) or trEnt == selectedEnt ) then
 		ent:SetNoDraw( true )
 		return
 	end
@@ -328,7 +328,7 @@ function TOOL:UpdateGhostEntity( ent, ply, tr )
 
 		if ( !IsValid( trEnt.AttachedEntity ) ) then
 			local tab = ents.FindByClassAndParent( "prop_dynamic", trEnt )
-			if ( tab && IsValid( tab[ 1 ] ) ) then attachedEntity = tab[ 1 ] end
+			if ( tab and IsValid( tab[ 1 ] ) ) then attachedEntity = tab[ 1 ] end
 		end
 
 		if ( IsValid( attachedEntity ) ) then trEnt = attachedEntity end
@@ -343,7 +343,7 @@ function TOOL:UpdateGhostEntity( ent, ply, tr )
 	ent:SetColor( clr )
 
 	ent:SetMaterial( trEnt:GetMaterial() )
-	ent:SetSkin( trEnt:GetSkin() || 0 )
+	ent:SetSkin( trEnt:GetSkin() or 0 )
 	ent:SetModel( trEnt:GetModel() )
 	ent:SetParent( selectedEnt, 0 )
 	ent:AddEffects( EF_BONEMERGE )
@@ -374,12 +374,12 @@ function TOOL:Think()
 		mask = MASK_ALL,
 	} )
 
-	if ( !IsValid( tr.Entity ) || tr.Entity == self:GetSelectedEntity() || tr.Entity:IsPlayer() || tr.Entity:GetModel():StartWith( "*" ) ) then
+	if ( !IsValid( tr.Entity ) or tr.Entity == self:GetSelectedEntity() or tr.Entity:IsPlayer() or tr.Entity:GetModel():StartWith( "*" ) ) then
 		self:ReleaseGhostEntity()
 		return
 	end
 
-	if ( IsValid( tr.Entity ) && !IsValid( self.GhostEntity ) ) then
+	if ( IsValid( tr.Entity ) and !IsValid( self.GhostEntity ) ) then
 		self:MakeGhostEntity( tr.Entity:GetModel(), Vector( 0, 0, 0 ), Angle( 0, 0, 0 ) )
 	end
 
@@ -441,7 +441,7 @@ end
 local function CountBonemergedChildren( ent )
 	local counter = 0
 	for k, v in pairs( ent:GetChildren() ) do
-		if ( !IsValid( v ) || v:GetClass() != "ent_bonemerged" ) then continue end
+		if ( !IsValid( v ) or v:GetClass() != "ent_bonemerged" ) then continue end
 
 		counter = counter + 1
 	end
@@ -472,16 +472,16 @@ function TOOL.BuildCPanel( panel )
 	pnl:DockMargin( 10, 10, 10, 10 )
 	pnl.Think = function( s )
 		local toolgun = LocalPlayer()
-		if ( !IsValid( toolgun ) || !toolgun.GetTool ) then return end
+		if ( !IsValid( toolgun ) or !toolgun.GetTool ) then return end
 		toolgun = toolgun:GetTool( "rb655_easy_bonemerge" )
 		if ( !istable( toolgun ) ) then return end
 
 		local ent = toolgun:GetSelectedEntity()
-		if ( IsValid( ent ) && ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
-		if ( !IsValid( ent ) && s.LastSelectedEntity != nil ) then
+		if ( IsValid( ent ) and ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
+		if ( !IsValid( ent ) and s.LastSelectedEntity != nil ) then
 			s.LastSelectedEntity = nil
 			s:Rebuild()
-		elseif ( IsValid( ent ) && ( s.LastSelectedEntity == nil || s.LastSelectedEntity != ent || ( s.LastChildrenNum || 0 ) != CountBonemergedChildren( ent ) ) ) then
+		elseif ( IsValid( ent ) and ( s.LastSelectedEntity == nil or s.LastSelectedEntity != ent or ( s.LastChildrenNum or 0 ) != CountBonemergedChildren( ent ) ) ) then
 			s.LastSelectedEntity = ent
 			s.LastChildrenNum = CountBonemergedChildren( ent )
 			s:Rebuild()
@@ -503,7 +503,7 @@ function TOOL.BuildCPanel( panel )
 
 		local height = 0
 		for k, v in pairs( s.LastSelectedEntity:GetChildren() ) do
-			if ( !IsValid( v ) || v:GetClass() != "ent_bonemerged" ) then continue end
+			if ( !IsValid( v ) or v:GetClass() != "ent_bonemerged" ) then continue end
 
 			local btn = s:Add( "DButton" )
 			btn:SetText( "Undo " .. v:GetModel():sub( 8 ) .. "#" .. v:EntIndex() )
@@ -558,7 +558,7 @@ local color_red = Color( 255, 0, 0 )
 
 hook.Add( "PreDrawHalos", "rb655_bonemerge_highlight", function()
 	local hovered = vgui.GetHoveredPanel()
-	if ( !IsValid( hovered ) || !hovered.bonemergeButton || !IsValid( hovered.ent ) ) then return end
+	if ( !IsValid( hovered ) or !hovered.bonemergeButton or !IsValid( hovered.ent ) ) then return end
 
 	halo.Add( { hovered.ent }, color_red, 1, 1, 10, true, true )
 end )
@@ -596,7 +596,7 @@ end
 local crossmat = Material( "icon16/cross.png" )
 function TOOL:DrawHUD()
 	local ent = self:GetSelectedEntity()
-	if ( IsValid( ent ) && ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
+	if ( IsValid( ent ) and ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
 
 	if ( !IsValid( ent ) ) then return end
 
@@ -623,7 +623,7 @@ function TOOL:DrawHUD()
 
 		if ( !IsValid( target.AttachedEntity ) ) then
 			local tab = ents.FindByClassAndParent( "prop_dynamic", target )
-			if ( tab && IsValid( tab[ 1 ] ) ) then attachedEntity = tab[ 1 ] end
+			if ( tab and IsValid( tab[ 1 ] ) ) then attachedEntity = tab[ 1 ] end
 		end
 
 		if ( IsValid( attachedEntity ) ) then target = attachedEntity end
@@ -638,7 +638,7 @@ function TOOL:DrawHUD()
 
 	if ( target:GetBoneCount() ) then
 		for id = 0, target:GetBoneCount() - 1 do
-			if ( table.HasValue( bones, target:GetBoneName( id ) ) && target:GetBoneName( id ) != "__INVALIDBONE__" ) then
+			if ( table.HasValue( bones, target:GetBoneName( id ) ) and target:GetBoneName( id ) != "__INVALIDBONE__" ) then
 				hasBones = true
 				break
 			end
@@ -654,7 +654,7 @@ function TOOL:DrawHUD()
 		surface.DrawTexturedRect( ScrW() / 2 - size / 2, ScrH() / 2 - size / 2, size, size )
 	end
 
-	if ( hasBones && ent:GetBoneCount() < target:GetBoneCount() && target != ent ) then
+	if ( hasBones and ent:GetBoneCount() < target:GetBoneCount() and target != ent ) then
 		boxText( "tool.rb655_easy_bonemerge.backwards", ScrW() / 2, ScrH() / 2 + 100 )
 	end
 end

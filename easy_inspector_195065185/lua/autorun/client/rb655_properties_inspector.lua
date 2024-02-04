@@ -39,7 +39,7 @@ local fieldCats = {
 local panelMeta = FindMetaTable( "Panel" )
 local function findCategory( name, value, default )
 	if ( fieldCats[ name ] ) then return fieldCats[ name ] end
-	if ( panelMeta[ name ] && isfunction( value ) ) then return "Method Implementations" end
+	if ( panelMeta[ name ] and isfunction( value ) ) then return "Method Implementations" end
 	return default
 end
 
@@ -47,7 +47,7 @@ local function addRowByType( container, category, name, value, tabl )
 
 	local Row1 = container:CreateRow( findCategory( name, value, category ), name )
 
-	if ( type( value ) == "table" && value.r && value.g && value.b && value.a ) then
+	if ( type( value ) == "table" and value.r and value.g and value.b and value.a ) then
 		Row1:Setup( "VectorColor" )
 		Row1:SetValue( value )
 		Row1.DataChanged = function( self, data )
@@ -102,7 +102,7 @@ end
 function PANEL:DoExpand( b )
 
 	self.Container:SetVisible( b )
-	if ( b && self.internalTable ) then
+	if ( b and self.internalTable ) then
 		self.Container:Clear()
 
 		-- TODO: self.PanelsToUpdate[ k ] = Row1 alternative for this too!
@@ -252,10 +252,10 @@ function PANEL:Panel_GetNodeNameIcon( pnl, node )
 	if ( !strName ) then strName = "Wtf" end
 
 	-- Icon
-	local icon = pnl.ThisClass == "DFrame" && "icon16/application.png" or "icon16/table.png"
+	local icon = pnl.ThisClass == "DFrame" and "icon16/application.png" or "icon16/table.png"
 	if ( !pnl:IsVisible() ) then
 		strName = strName .. " (Invisible)"
-		icon = pnl.ThisClass == "DFrame" && "icon16/application_error.png" or "icon16/table_error.png"
+		icon = pnl.ThisClass == "DFrame" and "icon16/application_error.png" or "icon16/table_error.png"
 	end
 
 	if ( IsValid( node ) ) then
@@ -324,7 +324,7 @@ function PANEL:DeltaRefreshList( rootNode )
 		if ( node.internalPanelChildren != #node.internalPanel:GetChildren() or true ) then
 
 			local tempList = {}
-			for cid, pnl in pairs( IsValid( node.ChildNodes ) && node.ChildNodes:GetChildren() or {} ) do
+			for cid, pnl in pairs( IsValid( node.ChildNodes ) and node.ChildNodes:GetChildren() or {} ) do
 				-- Remove deleted panels from the list
 				if ( !IsValid( pnl.internalPanel ) ) then
 					pnl:Remove()
@@ -364,9 +364,9 @@ function PANEL:Think()
 		for k, v in pairs( self.PanelsToUpdate ) do
 			local val = self.PanelToUpdateFrom[ k ]
 
-			if ( v.Inner.IsEditing && v.Inner:IsEditing() ) then continue end
+			if ( v.Inner.IsEditing and v.Inner:IsEditing() ) then continue end
 
-			if ( type( val ) == "table" && val.r && val.g && val.b && val.a ) then
+			if ( type( val ) == "table" and val.r and val.g and val.b and val.a ) then
 				v:SetValue( val )
 			elseif ( type( val ) == "boolean" or type( val ) == "table" ) then
 				v:SetValue( val )
@@ -420,7 +420,7 @@ function PANEL:OnNodeSelectedReal( tree, node, props )
 		--self.PanelsToUpdate[ k ] = Row1
 	end
 
-	if ( type( pnl ) != "table" && pnl.GetTable ) then pnl = pnl:GetTable() end
+	if ( type( pnl ) != "table" and pnl.GetTable ) then pnl = pnl:GetTable() end
 
 	for k, v in SortedPairs( pnl ) do
 		if ( type( v ) == "function" ) then continue end

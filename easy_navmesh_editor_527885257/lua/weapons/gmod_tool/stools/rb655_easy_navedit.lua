@@ -238,12 +238,12 @@ local ToolModes = {
 			end
 
 			local markedArea = navmesh.GetMarkedArea()
-			if ( IsValid( markedArea ) && ( !IsValid( area ) || markedArea == area ) ) then
+			if ( IsValid( markedArea ) and ( !IsValid( area ) or markedArea == area ) ) then
 				RunConsoleCommand( "nav_corner_select" )
 			elseif ( !IsValid( markedArea ) ) then
 				RunConsoleCommand( "nav_mark" )
 				RunConsoleCommand( "nav_corner_select" )
-			elseif ( IsValid( area ) && markedArea != area ) then
+			elseif ( IsValid( area ) and markedArea != area ) then
 				RunConsoleCommand( "nav_unmark" )
 				RunConsoleCommand( "nav_mark" )
 				RunConsoleCommand( "nav_corner_select" )
@@ -261,7 +261,7 @@ local ToolModes = {
 if ( SERVER ) then
 	local sv_cheats = GetConVar( "sv_cheats" )
 	concommand.Add( "nav_reset", function()
-		if ( !game.SinglePlayer() && !sv_cheats:GetBool() ) then MsgC( color_white, "Can't use cheat command nav_reset in multiplayer, unless the server has sv_cheats set to 1.\n" ) return end
+		if ( !game.SinglePlayer() and !sv_cheats:GetBool() ) then MsgC( color_white, "Can't use cheat command nav_reset in multiplayer, unless the server has sv_cheats set to 1.\n" ) return end
 		navmesh.Reset()
 	end )
 end
@@ -277,12 +277,12 @@ function TOOL:LeftClick( trace )
 
 	if ( CLIENT ) then return true end
 
-	if ( mode.needs_marked_area && ( !IsValid( navmesh.GetMarkedArea() ) && !IsValid( navmesh.GetMarkedLadder() ) ) ) then
+	if ( mode.needs_marked_area and ( !IsValid( navmesh.GetMarkedArea() ) and !IsValid( navmesh.GetMarkedLadder() ) ) ) then
 		RunConsoleCommand( "nav_mark" )
 		return true
 	end
 
-	if ( self:GetStage() == 0 && mode.twoStage ) then
+	if ( self:GetStage() == 0 and mode.twoStage ) then
 		if ( mode.command_start ) then
 			if ( isfunction( mode.command_start ) ) then
 				mode.command_start( self, trace )
@@ -325,23 +325,23 @@ end
 function TOOL:Reload( trace )
 	local mode = self:GetToolMode()
 
-	if ( CLIENT ) then return mode && mode.reload end
+	if ( CLIENT ) then return mode and mode.reload end
 
-	if ( mode && mode.reload ) then RunConsoleCommand( mode.reload ) end
+	if ( mode and mode.reload ) then RunConsoleCommand( mode.reload ) end
 
-	return mode && mode.reload
+	return mode and mode.reload
 end
 
 function TOOL:GetOperation()
 	local mode = self:GetToolMode()
-	return ( mode && mode.reload != nil ) && 1 || 0
+	return ( mode and mode.reload != nil ) and 1 or 0
 end
 
 function TOOL:Think()
 	if ( CLIENT ) then return true end
 
 	if ( !GetConVar( "nav_edit" ):GetBool() ) then
-		if ( !game.SinglePlayer() && !GetConVar( "sv_cheats" ):GetBool() ) then return end
+		if ( !game.SinglePlayer() and !GetConVar( "sv_cheats" ):GetBool() ) then return end
 		RunConsoleCommand( "nav_edit", "1" )
 	else
 		local vector = navmesh.GetEditCursorPosition()
@@ -376,7 +376,7 @@ end
 function TOOL:Holster()
 	if ( CLIENT ) then return true end
 
-	if ( !game.SinglePlayer() && !GetConVar( "sv_cheats" ):GetBool() ) then return end
+	if ( !game.SinglePlayer() and !GetConVar( "sv_cheats" ):GetBool() ) then return end
 	RunConsoleCommand( "nav_edit", "0" )
 end
 
@@ -493,7 +493,7 @@ surface.CreateFont( "navedit_error", {
 } )
 
 function TOOL:DrawHUD()
-	if ( !game.SinglePlayer() && !GetConVar( "sv_cheats" ):GetBool() ) then
+	if ( !game.SinglePlayer() and !GetConVar( "sv_cheats" ):GetBool() ) then
 		draw.SimpleText( "This tool will not function without sv_cheats set to 1!", "navedit_error", ScrW() / 2, ScrH() / 2 + 64, color_white, 1, 1 )
 	end
 end
@@ -551,7 +551,7 @@ function TOOL:DrawToolScreen( sw, sh )
 		end
 
 		local clr = Color( 255, 255, 255 )
-		if ( attr > -1 && bit.band( attr, att.id ) == att.id ) then clr = Color( 128, 200, 128 ) end
+		if ( attr > -1 and bit.band( attr, att.id ) == att.id ) then clr = Color( 128, 200, 128 ) end
 		draw.SimpleText( att.icon, "navedit_font", x + charw / 2, y, clr, 1 )
 
 		if ( selected == id ) then

@@ -134,7 +134,7 @@ local function OnSndNodeSelected( self, node, name, path, pathid, icon, ViewPane
 		if ( k <= offset ) then continue end
 
 		local p = Path .. "/"
-		if ( string.StartWith( path, "addons/" ) or string.StartWith( path, "download/" ) ) then
+		if ( string.StartsWith( path, "addons/" ) or string.StartsWith( path, "download/" ) ) then
 			p = string.sub( p, string.find( p, "/sound/" ) + 1 )
 		end
 
@@ -153,10 +153,10 @@ local function AddBrowseContentSnd( node, name, icon, path, pathid )
 	local ViewPanel = node.ViewPanel
 	local pnlContent = node.pnlContent
 
-	if ( !string.EndsWith( path, "/" ) && string.len( path ) > 1 ) then path = path .. "/" end
+	if ( !string.EndsWith( path, "/" ) and string.len( path ) > 1 ) then path = path .. "/" end
 
 	local fi, fo = file.Find( path .. "sound", pathid )
-	if ( !fo && !fi ) then return end
+	if ( !fo and !fi ) then return end
 
 	local sounds = node:AddFolder( name, path .. "sound", pathid, false, false, "*.*" )
 	sounds:SetIcon( icon )
@@ -276,22 +276,26 @@ end )
 
 --[[ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ ]]
 
+local badShaders = {
+	"lightmappedgeneric",
+	"worldvertextransition",
+	"spritecard",
+	"water",
+	"cable",
+	"refract",
+	--"unlitgeneric",
+}
+
 local function IsMaterialUsableOnEntities( matPath )
 	-- A png file? No thanks
 	if ( string.GetExtensionFromFilename( matPath ) ) then return false end
 
 	local mat = Material( matPath )
-	if ( !string.find( mat:GetShader(), "LightmappedGeneric" )
-	&& !string.find( mat:GetShader(), "WorldVertexTransition" )
-	&& !string.find( mat:GetShader(), "Spritecard" )
-	&& !string.find( mat:GetShader(), "Water" )
-	&& !string.find( mat:GetShader(), "Cable" )
-	--&& !string.find( mat:GetShader(), "UnlitGeneric" )
-	&& !string.find( mat:GetShader(), "Refract" ) ) then
-		return true
+	if ( table.HasValue( badShaders, mat:GetShader():lower() ) ) then
+		return false
 	end
 
-	return false
+	return true
 end
 
 local DisplayedWarning = false
@@ -383,7 +387,7 @@ local function OnMatNodeSelected( self, node, name, path, pathid, icon, ViewPane
 		if ( k <= offset ) then continue end
 
 		local p = Path .. "/"
-		if ( string.StartWith( path, "addons/" ) or string.StartWith( path, "download/" ) ) then
+		if ( string.StartsWith( path, "addons/" ) or string.StartsWith( path, "download/" ) ) then
 			p = string.sub( p, string.find( p, "/materials/" ) + 1 )
 		end
 
@@ -408,10 +412,10 @@ local function AddBrowseContentMaterial( node, name, icon, path, pathid )
 	local ViewPanel = node.ViewPanel
 	local pnlContent = node.pnlContent
 
-	if ( !string.EndsWith( path, "/" ) && string.len( path ) > 1 ) then path = path .. "/" end
+	if ( !string.EndsWith( path, "/" ) and string.len( path ) > 1 ) then path = path .. "/" end
 
 	local fi, fo = file.Find( path .. "materials", pathid )
-	if ( !fi && !fo ) then return end
+	if ( !fi and !fo ) then return end
 
 	local materials = node:AddFolder( name, path .. "materials", pathid, false, false, "*.*" )
 	materials:SetIcon( icon )
@@ -770,7 +774,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_weapons", function( pnlCo
 	local Categorised = {}
 
 	for k, weapon in pairs( Weapons ) do
-		if ( !weapon.Spawnable && !weapon.AdminSpawnable ) then continue end
+		if ( !weapon.Spawnable and !weapon.AdminSpawnable ) then continue end
 
 		Categorised[ weapon.Category ] = Categorised[ weapon.Category ] or {}
 		table.insert( Categorised[ weapon.Category ], weapon )

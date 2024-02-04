@@ -120,7 +120,7 @@ local function MakeDTVarToggleProperty( class, tab )
 			if ( !IsValid( ent ) ) then return false end
 			if ( !gamemode.Call( "CanProperty", ply, class, ent ) ) then return false end
 
-			if ( self.ClassRestrict && ent:GetClass() != self.ClassRestrict ) then return false end
+			if ( self.ClassRestrict and ent:GetClass() != self.ClassRestrict ) then return false end
 
 			return true
 

@@ -24,7 +24,7 @@ local function GiveWeapon( ply, ent, args )
 
 	-- Cannot validate if the player is admin for admin weapons if we got no player object (saves)
 	if ( IsValid( ply ) ) then
-		if ( ( !swep.Spawnable && !ply:IsAdmin() ) or ( swep.AdminOnly && !ply:IsAdmin() ) ) then return end
+		if ( ( !swep.Spawnable and !ply:IsAdmin() ) or ( swep.AdminOnly and !ply:IsAdmin() ) ) then return end
 		if ( !hook.Run( "PlayerGiveSWEP", ply, className, swep ) ) then return end
 	end
 
@@ -59,7 +59,7 @@ local nowep = {
 }
 
 AddEntFunctionProperty( "rb655_npc_weapon_strip", "Strip Weapon", 651, function( ent )
-	if ( ent:IsNPC() && IsValid( ent:GetActiveWeapon() ) && !table.HasValue( nowep, ent:GetClass() ) ) then return true end
+	if ( ent:IsNPC() and IsValid( ent:GetActiveWeapon() ) and !table.HasValue( nowep, ent:GetClass() ) ) then return true end
 	return false
 end, function( ent )
 	ent:GetActiveWeapon():Remove()
@@ -71,7 +71,7 @@ properties.Add( "rb655_npc_weapon", {
 	Order = 650,
 	Filter = function( self, ent, ply )
 		if ( !IsValid( ent ) or !gamemode.Call( "CanProperty", ply, "rb655_npc_weapon", ent ) ) then return false end
-		if ( ent:IsNPC() && !table.HasValue( nowep, ent:GetClass() ) ) then return true end
+		if ( ent:IsNPC() and !table.HasValue( nowep, ent:GetClass() ) ) then return true end
 		return false
 	end,
 	Action = function( self, ent )
@@ -101,7 +101,7 @@ properties.Add( "rb655_npc_weapon", {
 		Categorised[ "Half-Life 2" ] = table.Copy( extraItems )
 
 		for k, weapon in pairs( list.Get( "Weapon" ) ) do
-			if ( !weapon.Spawnable && !weapon.AdminSpawnable ) then continue end
+			if ( !weapon.Spawnable and !weapon.AdminSpawnable ) then continue end
 
 			local cat = weapon.Category or "Other"
 			if ( !isstring( cat ) ) then cat = tostring( cat ) end
@@ -116,11 +116,11 @@ properties.Add( "rb655_npc_weapon", {
 			PropPanel:Add( Header )
 
 			for k, WeaponTable in SortedPairsByMemberValue( v, "PrintName" ) do
-				if ( WeaponTable.AdminOnly && !LocalPlayer():IsAdmin() ) then continue end
+				if ( WeaponTable.AdminOnly and !LocalPlayer():IsAdmin() ) then continue end
 
 				local icon = vgui.Create( "ContentIcon", PropPanel )
 				icon:SetMaterial( "entities/" .. WeaponTable.ClassName .. ".png" )
-				icon:SetName( WeaponTable.PrintName or "#" .. WeaponTable.ClassName )
+				icon:SetName( WeaponTable.PrintName or ( "#" .. WeaponTable.ClassName ) )
 				icon:SetAdminOnly( WeaponTable.AdminOnly or false )
 
 				icon.DoClick = function()

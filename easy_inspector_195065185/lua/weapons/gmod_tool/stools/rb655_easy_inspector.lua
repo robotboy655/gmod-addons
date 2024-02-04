@@ -159,7 +159,7 @@ AddInfoFunc( {
 
 			local offset = 0
 			for pid, p in pairs( points or {} ) do
-				if ( p.x == pos.x && p.y == pos.y ) then
+				if ( p.x == pos.x and p.y == pos.y ) then
 					offset = offset + 10
 				end
 			end
@@ -186,19 +186,19 @@ AddInfoFunc( {
 		for i = 0, ent:GetBoneCount() - 1 do
 
 			local pos = ent:GetBonePosition( i )
-			if ( pos == ent:GetPos() && ent:GetBoneMatrix( i ) ) then
+			if ( pos == ent:GetPos() and ent:GetBoneMatrix( i ) ) then
 				pos = ent:GetBoneMatrix( i ):GetTranslation()
 			end
 
 			if ( ent:GetBoneName( i ) == "__INVALIDBONE__" ) then continue end
 
-			if ( dirs && ent:GetBoneMatrix( i ) ) then
+			if ( dirs and ent:GetBoneMatrix( i ) ) then
 
 				cam.Start3D( EyePos(), EyeAngles() )
 				for id, bone in pairs( ent:GetChildBones( i ) ) do
 
 					local pos2 = ent:GetBonePosition( bone )
-					if ( pos2 == ent:GetPos() && ent:GetBoneMatrix( bone ) ) then
+					if ( pos2 == ent:GetPos() and ent:GetBoneMatrix( bone ) ) then
 						pos2 = ent:GetBoneMatrix( bone ):GetTranslation()
 					end
 
@@ -215,7 +215,7 @@ AddInfoFunc( {
 
 			local offset = 0
 			for id, p in pairs( points or {} ) do
-				if ( p.x == pos.x && p.y == pos.y ) then
+				if ( p.x == pos.x and p.y == pos.y ) then
 					offset = offset + 10
 				end
 			end
@@ -239,7 +239,7 @@ AddInfoFunc( {
 	-- This is a hacky one..
 	func = function( ent, labels, dirs )
 
-		if ( ent.InspectorMeshes && ( !ent.InspectorMesh or ( ent.InsepctorPhysHash != ent.InsepctorPhysHashCache && gMeshCache[ ent.InsepctorPhysHash ] ) ) ) then
+		if ( ent.InspectorMeshes and ( !ent.InspectorMesh or ( ent.InsepctorPhysHash != ent.InsepctorPhysHashCache and gMeshCache[ ent.InsepctorPhysHash ] ) ) ) then
 			local gMesh = {}
 			local gMeshIDs = {}
 			local i = 0
@@ -265,12 +265,12 @@ AddInfoFunc( {
 		render.SetMaterial( mat_wireframe )
 
 		-- Certain entities do not rotate their physics boxes
-		local shouldRotate = !( ent:IsNPC() && ent:GetSolid() == SOLID_BBOX ) && !ent:IsPlayer()
+		local shouldRotate = !( ent:IsNPC() and ent:GetSolid() == SOLID_BBOX ) and !ent:IsPlayer()
 		for i, mesha in pairs( ent.InspectorMesh ) do
 			local matrix = Matrix()
-			local bonemat = ent:GetBoneMatrix( ent:TranslatePhysBoneToBone( ent.InspectorMeshIDs && ent.InspectorMeshIDs[ i ] or 0 ) )
-			if ( bonemat && shouldRotate ) then matrix:SetAngles( bonemat:GetAngles() ) else matrix:SetAngles( ( ent:GetSolid() == SOLID_BBOX && ent:GetMoveType() != MOVETYPE_VPHYSICS ) && angle_zero or ent:GetAngles() ) end
-			if ( bonemat && shouldRotate ) then matrix:SetTranslation( bonemat:GetTranslation() ) else matrix:SetTranslation( ent:GetPos() ) end
+			local bonemat = ent:GetBoneMatrix( ent:TranslatePhysBoneToBone( ent.InspectorMeshIDs and ent.InspectorMeshIDs[ i ] or 0 ) )
+			if ( bonemat and shouldRotate ) then matrix:SetAngles( bonemat:GetAngles() ) else matrix:SetAngles( ( ent:GetSolid() == SOLID_BBOX and ent:GetMoveType() != MOVETYPE_VPHYSICS ) and angle_zero or ent:GetAngles() ) end
+			if ( bonemat and shouldRotate ) then matrix:SetTranslation( bonemat:GetTranslation() ) else matrix:SetTranslation( ent:GetPos() ) end
 
 			cam.PushModelMatrix( matrix )
 
@@ -303,8 +303,8 @@ AddInfoFunc( {
 			if ( !IsValid( ent:GetPhysicsObjectNum( i ) ) ) then continue end
 			local matrix = Matrix()
 			-- local bonemat = ent:GetBoneMatrix( ent:TranslatePhysBoneToBone( i) )
-			-- if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetAngles( bonemat:GetAngles() ) else matrix:SetAngles( ent:GetAngles() ) end
-			-- if ( bonemat && !ent:IsNPC() && !ent:IsPlayer() ) then matrix:SetTranslation( bonemat:GetTranslation() ) else matrix:SetTranslation( ent:GetPos() ) end
+			-- if ( bonemat and !ent:IsNPC() and !ent:IsPlayer() ) then matrix:SetAngles( bonemat:GetAngles() ) else matrix:SetAngles( ent:GetAngles() ) end
+			-- if ( bonemat and !ent:IsNPC() and !ent:IsPlayer() ) then matrix:SetTranslation( bonemat:GetTranslation() ) else matrix:SetTranslation( ent:GetPos() ) end
 			matrix:SetAngles( ent:GetPhysicsObjectNum( i ):GetAngles() )
 			matrix:SetTranslation( ent:GetPhysicsObjectNum( i ):GetPos() )
 			cam.PushModelMatrix( matrix )
@@ -541,14 +541,14 @@ AddInfoFunc( {
 	func = function( ent, labels, dirs )
 
 		local tr = LocalPlayer():GetEyeTrace()
-		local pos = ent == game.GetWorld() && vector_origin or ent:GetPos()
-		if ( pos == vector_origin && ent != game.GetWorld() ) then pos = ent:LocalToWorld( ent:OBBCenter() ) end
+		local pos = ent == game.GetWorld() and vector_origin or ent:GetPos()
+		if ( pos == vector_origin and ent != game.GetWorld() ) then pos = ent:LocalToWorld( ent:OBBCenter() ) end
 
-		local pos1 = ent == game.GetWorld() && IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) && LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldPos" ) or ent:LocalToWorld( ent:GetNWVector( "LocalPos" ) )
+		local pos1 = ent == game.GetWorld() and IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) and LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldPos" ) or ent:LocalToWorld( ent:GetNWVector( "LocalPos" ) )
 		local pos2 = tr.HitPos
-		local pos3 = ent == game.GetWorld() && vector_origin or ent:GetPos()
+		local pos3 = ent == game.GetWorld() and vector_origin or ent:GetPos()
 
-		local dir = ent == game.GetWorld() && IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) && LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldDir" ) or ent:GetNWVector( "LocalDir" )
+		local dir = ent == game.GetWorld() and IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) and LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldDir" ) or ent:GetNWVector( "LocalDir" )
 
 		cam.Start3D( EyePos(), EyeAngles() )
 			render.DrawLine( pos, pos1, Color( 255, 255, 255 ), false )
@@ -674,7 +674,7 @@ if ( SERVER ) then
 
 				if ( i == parts ) then
 					local convexes = ent:GetPhysicsObject():GetMeshConvexes()
-					net.WriteString( convexes && util.CRC( util.TableToJSON( convexes ) ) or "" )
+					net.WriteString( convexes and util.CRC( util.TableToJSON( convexes ) ) or "" )
 				end
 			net.Send( ply )
 
@@ -747,12 +747,12 @@ function TOOL:SendEntityInfo( ent )
 
 	-- Save the set values for later use
 	local physObj = ent:GetPhysicsObject()
-	ent.InspectorMapID = ent.MapCreationID && ent:MapCreationID() or -1
-	ent.InspectorName = ent.GetName && ent:GetName() or ""
-	ent.InspectorMass = IsValid( physObj ) && physObj:GetMass() or 0
-	ent.InspectorMassCenter = IsValid( physObj ) && physObj:GetMassCenter() or Vector( 0, 0, 0 )
-	ent.InspectorMat = IsValid( physObj ) && physObj:GetMaterial() or "" -- Should use the trace!
-	ent.InsepctorPhysHash = ( IsValid( physObj ) && physObj:GetMeshConvexes() ) && util.CRC( util.TableToJSON( physObj:GetMeshConvexes() ) ) or ""
+	ent.InspectorMapID = ent.MapCreationID and ent:MapCreationID() or -1
+	ent.InspectorName = ent.GetName and ent:GetName() or ""
+	ent.InspectorMass = IsValid( physObj ) and physObj:GetMass() or 0
+	ent.InspectorMassCenter = IsValid( physObj ) and physObj:GetMassCenter() or Vector( 0, 0, 0 )
+	ent.InspectorMat = IsValid( physObj ) and physObj:GetMaterial() or "" -- Should use the trace!
+	ent.InsepctorPhysHash = ( IsValid( physObj ) and physObj:GetMeshConvexes() ) and util.CRC( util.TableToJSON( physObj:GetMeshConvexes() ) ) or ""
 
 	net.Start( "rb655_inspector_genericinfo" )
 		net.WriteEntity( ent )
@@ -766,10 +766,10 @@ function TOOL:SendEntityInfo( ent )
 end
 
 function TOOL:SetSelectedEntity( ent, tr )
-	if ( IsValid( ent ) && ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
+	if ( IsValid( ent ) and ent:GetClass() == "prop_effect" ) then ent = ent.AttachedEntity end
 	if ( !IsValid( ent ) ) then ent = NULL end
 
-	if ( tr && IsValid( ent ) ) then
+	if ( tr and IsValid( ent ) ) then
 		ent:SetNWVector( "LocalPos", ent:WorldToLocal( tr.HitPos ) )
 		ent:SetNWVector( "LocalDir", tr.HitNormal )
 	end
@@ -810,12 +810,12 @@ function TOOL:Think()
 		self.InspectorNextCheck = CurTime() + 1
 
 		local physObj = ent:GetPhysicsObject()
-		local InspectorMapID = ent.MapCreationID && ent:MapCreationID() or -1
-		local InspectorName = ent.GetName && ent:GetName() or ""
-		local InspectorMass = IsValid( physObj ) && physObj:GetMass() or 0
-		local InspectorMassCenter = IsValid( physObj ) && physObj:GetMassCenter() or Vector( 0, 0, 0 )
-		local InspectorMat = IsValid( physObj ) && physObj:GetMaterial() or ""
-		local InsepctorPhysHash = ( IsValid( physObj ) && physObj:GetMeshConvexes() ) && util.CRC( util.TableToJSON( physObj:GetMeshConvexes() ) ) or ""
+		local InspectorMapID = ent.MapCreationID and ent:MapCreationID() or -1
+		local InspectorName = ent.GetName and ent:GetName() or ""
+		local InspectorMass = IsValid( physObj ) and physObj:GetMass() or 0
+		local InspectorMassCenter = IsValid( physObj ) and physObj:GetMassCenter() or Vector( 0, 0, 0 )
+		local InspectorMat = IsValid( physObj ) and physObj:GetMaterial() or ""
+		local InsepctorPhysHash = ( IsValid( physObj ) and physObj:GetMeshConvexes() ) and util.CRC( util.TableToJSON( physObj:GetMeshConvexes() ) ) or ""
 
 		if ( ent.InspectorMapID != InspectorMapID or ent.InspectorName != InspectorName or ent.InspectorMass != InspectorMass or
 			ent.InspectorMat != InspectorMat or ent.InsepctorPhysHash != InsepctorPhysHash or ent.InspectorMassCenter != InspectorMassCenter ) then
@@ -864,10 +864,10 @@ local function TextField( panel, func, tooltip, noent, placeholder )
 	function text:Think()
 		if ( self.icon ) then self.icon:SetPos( self:GetWide() - 17, 2 ) end
 		if ( self:IsEditing() ) then return end
-		local tool = LocalPlayer().GetTool && LocalPlayer():GetTool( "rb655_easy_inspector" )
+		local tool = LocalPlayer().GetTool and LocalPlayer():GetTool( "rb655_easy_inspector" )
 		if ( !tool or !tool.GetSelectedEntity ) then return end
 		local ent = tool:GetSelectedEntity()
-		if ( !IsValid( ent ) && noent == FIELD_PICKER ) then ent = LocalPlayer():GetEyeTrace().Entity end
+		if ( !IsValid( ent ) and noent == FIELD_PICKER ) then ent = LocalPlayer():GetEyeTrace().Entity end
 
 		if ( IsValid( ent ) or noent == FIELD_USENULL ) then func( self, ent ) else self:SetValue( "" ) end
 	end
@@ -937,12 +937,12 @@ function TOOL.BuildCPanel( panel, nope )
 	end, "Entity color", FIELD_PICKER )
 
 	TextField( panel, function( self, ent )
-		local pos = !IsValid( ent ) && IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) && LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldPos" ) or ent:GetNWVector( "LocalPos" )
+		local pos = !IsValid( ent ) and IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) and LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldPos" ) or ent:GetNWVector( "LocalPos" )
 		self:SetValue( "Vector( " .. math.floor( pos.x * 100 ) / 100 .. ", " .. math.floor( pos.y * 100 ) / 100 .. ", " .. math.floor( pos.z * 100 ) / 100 .. " )" )
 	end, "Entity:WorldToLocal result of last clicked position on the entity", FIELD_USENULL )
 
 	TextField( panel, function( self, ent )
-		local ang = !IsValid( ent ) && IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) && LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldDir" ):Angle() or ent:GetNWVector( "LocalDir" ):Angle()
+		local ang = !IsValid( ent ) and IsValid( LocalPlayer():GetWeapon( "gmod_tool" ) ) and LocalPlayer():GetWeapon( "gmod_tool" ):GetNWVector( "LocalWorldDir" ):Angle() or ent:GetNWVector( "LocalDir" ):Angle()
 		self:SetValue( "Angle( " .. math.floor( ang.p * 100 ) / 100 .. ", " .. math.floor( ang.y * 100 ) / 100 .. ", " .. math.floor( ang.r * 100 ) / 100 .. " )" )
 	end, "Hit direction of last clicked position on the entity", FIELD_USENULL )
 
@@ -1124,7 +1124,7 @@ hook.Add( "HUDPaint", "rb655_easy_inspector", function()
 
 	-- Don't draw the stuff twice
 	local actwep = LocalPlayer():GetActiveWeapon()
-	if ( IsValid( actwep ) && actwep:GetClass() == "gmod_tool" ) then return end
+	if ( IsValid( actwep ) and actwep:GetClass() == "gmod_tool" ) then return end
 
 	local wep = LocalPlayer():GetTool( "rb655_easy_inspector" )
 	if ( !wep ) then return end
@@ -1144,7 +1144,7 @@ function TOOL:DrawHUD( b )
 	-- THE HALO
 	local ent = self:GetSelectedEntity()
 
-	if ( IsValid( ent ) && LocalPlayer():ShouldDrawLocalPlayer() && ent:GetClass() == "viewmodel" ) then ent = LocalPlayer():GetActiveWeapon() end
+	if ( IsValid( ent ) and LocalPlayer():ShouldDrawLocalPlayer() and ent:GetClass() == "viewmodel" ) then ent = LocalPlayer():GetActiveWeapon() end
 
 	if ( !IsValid( ent ) ) then
 
@@ -1173,13 +1173,13 @@ function TOOL:DrawHUD( b )
 
 		if ( IsValid( ent ) ) then table.insert( t, ent ) end
 
-		if ( IsValid( ent ) && ent.GetActiveWeapon ) then table.insert( t, ent:GetActiveWeapon() ) end
+		if ( IsValid( ent ) and ent.GetActiveWeapon ) then table.insert( t, ent:GetActiveWeapon() ) end
 
 		halo.Add( t, HSVToColor( ( CurTime() * 3 ) % 360, math.abs( math.sin( CurTime() / 2 ) ), 1 ), 2, 2, 1 )
 	end
 
 	-- THE ENTITY FUNCS
-	if ( !LocalPlayer():ShouldDrawLocalPlayer() && ent == LocalPlayer() && tobool( self:GetClientNumber( "lp" ) ) ) then return end
+	if ( !LocalPlayer():ShouldDrawLocalPlayer() and ent == LocalPlayer() and tobool( self:GetClientNumber( "lp" ) ) ) then return end
 
 	if ( InfoFuncs[ self:GetSelectedFunc() ].check ) then
 		local check = InfoFuncs[ self:GetSelectedFunc() ].check( ent )

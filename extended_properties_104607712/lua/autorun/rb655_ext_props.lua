@@ -2,9 +2,9 @@
 AddCSLuaFile()
 
 local function rb655_property_filter( filtor, ent, ply )
-	if ( type( filtor ) == "string" && filtor != ent:GetClass() ) then return false end
-	if ( type( filtor ) == "table" && !table.HasValue( filtor, ent:GetClass() ) ) then return false end
-	if ( type( filtor ) == "function" && !filtor( ent, ply ) ) then return false end
+	if ( type( filtor ) == "string" and filtor != ent:GetClass() ) then return false end
+	if ( type( filtor ) == "table" and !table.HasValue( filtor, ent:GetClass() ) ) then return false end
+	if ( type( filtor ) == "function" and !filtor( ent, ply ) ) then return false end
 
 	return true
 end
@@ -89,7 +89,7 @@ if ( SERVER ) then
 		nextSync = CurTime() + 1
 
 		for id, ent in pairs( ents.GetAll() ) do -- TODO: Swtich to ents.Iterator at some point!
-			if ( IsValid( ent ) && SyncFuncs[ ent:GetClass() ] ) then
+			if ( IsValid( ent ) and SyncFuncs[ ent:GetClass() ] ) then
 				SyncFuncs[ ent:GetClass() ]( ent )
 			end
 		end
@@ -107,22 +107,22 @@ local ToggleIcon = "icon16/arrow_switch.png"
 -------------------------------------------------- Half - Life 2 Specific --------------------------------------------------
 
 AddEntFireProperty( "rb655_door_open", "Open", 655, function( ent, ply )
-	if ( !ent:GetNWBool( "Closed" ) && ent:GetClass() == "prop_door_rotating" ) then return false end
+	if ( !ent:GetNWBool( "Closed" ) and ent:GetClass() == "prop_door_rotating" ) then return false end
 
 	return rb655_property_filter( { "prop_door_rotating", "func_door_rotating", "func_door" }, ent, ply )
 end, "Open", "icon16/door_open.png" )
 AddEntFireProperty( "rb655_door_close", "Close", 656, function( ent, ply )
-	if ( ent:GetNWBool( "Closed" ) && ent:GetClass() == "prop_door_rotating" ) then return false end
+	if ( ent:GetNWBool( "Closed" ) and ent:GetClass() == "prop_door_rotating" ) then return false end
 
 	return rb655_property_filter( { "prop_door_rotating", "func_door_rotating", "func_door" }, ent, ply )
 end, "Close", "icon16/door.png" )
 AddEntFireProperty( "rb655_door_lock", "Lock", 657, function( ent, ply )
-	if ( ent:GetNWBool( "Locked" ) && ent:GetClass() != "prop_vehicle_prisoner_pod" ) then return false end
+	if ( ent:GetNWBool( "Locked" ) and ent:GetClass() != "prop_vehicle_prisoner_pod" ) then return false end
 
 	return rb655_property_filter( { "prop_door_rotating", "func_door_rotating", "func_door", "prop_vehicle_jeep", "prop_vehicle_airboat", "prop_vehicle_prisoner_pod" }, ent, ply )
 end, "Lock", "icon16/lock.png" )
 AddEntFireProperty( "rb655_door_unlock", "Unlock", 658, function( ent, ply )
-	if ( !ent:GetNWBool( "Locked" ) && ent:GetClass() != "prop_vehicle_prisoner_pod" ) then return false end
+	if ( !ent:GetNWBool( "Locked" ) and ent:GetClass() != "prop_vehicle_prisoner_pod" ) then return false end
 
 	return rb655_property_filter( { "prop_door_rotating", "func_door_rotating", "func_door", "prop_vehicle_jeep", "prop_vehicle_airboat", "prop_vehicle_prisoner_pod" }, ent, ply )
 end, "Unlock", "icon16/lock_open.png" )
@@ -187,7 +187,7 @@ function rb655_dissolve( ent )
 end
 
 AddEntFunctionProperty( "rb655_dissolve", "Disintegrate", 657, function( ent, ply )
-	if ( ent:GetModel() && ent:GetModel():StartWith( "*" ) ) then return false end
+	if ( ent:GetModel() and ent:GetModel():StartWith( "*" ) ) then return false end
 	if ( ent:IsPlayer() ) then return false end
 
 	return true
@@ -343,7 +343,7 @@ end, "icon16/arrow_refresh.png" )
 -------------------------------------------------- Vehicles --------------------------------------------------
 
 AddEntFunctionProperty( "rb655_vehicle_exit", "Kick Driver", 655, function( ent )
-	if ( ent:IsVehicle() && ent:GetNWBool( "HasDriver" ) ) then return true end
+	if ( ent:IsVehicle() and ent:GetNWBool( "HasDriver" ) ) then return true end
 	return false
 end, function( ent )
 	if ( !IsValid( ent:GetDriver() ) or !ent:GetDriver().ExitVehicle ) then return end
@@ -367,7 +367,7 @@ AddEntFireProperty( "rb655_vehicle_radar_off", "Disable Radar", 655, function( e
 end, "DisableRadar", "icon16/application_delete.png" )
 
 AddEntFunctionProperty( "rb655_vehicle_enter", "Enter Vehicle", 656, function( ent )
-	if ( ent:IsVehicle() && !ent:GetNWBool( "HasDriver" ) ) then return true end
+	if ( ent:IsVehicle() and !ent:GetNWBool( "HasDriver" ) ) then return true end
 	return false
 end, function( ent, ply )
 	ply:ExitVehicle()
@@ -379,7 +379,7 @@ AddEntFunctionProperty( "rb655_vehicle_add_gun", "Mount Gun", 657, function( ent
 	if ( ent:GetNWBool( "EnableGun", false ) ) then return false end
 	if ( ent:GetBodygroup( 1 ) == 1 ) then return false end
 	if ( ent:LookupSequence( "aim_all" ) > 0 ) then return true end
-	if ( ent:LookupSequence( "weapon_yaw" ) > 0 && ent:LookupSequence( "weapon_pitch" ) > 0 ) then return true end
+	if ( ent:LookupSequence( "weapon_yaw" ) > 0 and ent:LookupSequence( "weapon_pitch" ) > 0 ) then return true end
 	return false
 end, function( ent )
 	ent:SetKeyValue( "EnableGun", "1" )
@@ -405,14 +405,14 @@ end, ExplodeIcon )
 
 -- Emitter
 AddEntFunctionProperty( "rb655_emitter_on", "Start Emitting", 655, function( ent )
-	if ( ent:GetClass() == "gmod_emitter" && !ent:GetOn() ) then return true end
+	if ( ent:GetClass() == "gmod_emitter" and !ent:GetOn() ) then return true end
 	return false
 end, function( ent, ply )
 	ent:SetOn( true )
 end, EnableIcon )
 
 AddEntFunctionProperty( "rb655_emitter_off", "Stop Emitting", 656, function( ent )
-	if ( ent:GetClass() == "gmod_emitter" && ent:GetOn() ) then return true end
+	if ( ent:GetClass() == "gmod_emitter" and ent:GetOn() ) then return true end
 	return false
 end, function( ent, ply )
 	ent:SetOn( false )
@@ -420,14 +420,14 @@ end, DisableIcon )
 
 -- Lamps
 AddEntFunctionProperty( "rb655_lamp_on", "Enable", 655, function( ent )
-	if ( ent:GetClass() == "gmod_lamp" && !ent:GetOn() ) then return true end
+	if ( ent:GetClass() == "gmod_lamp" and !ent:GetOn() ) then return true end
 	return false
 end, function( ent, ply )
 	ent:Switch( true )
 end, EnableIcon )
 
 AddEntFunctionProperty( "rb655_lamp_off", "Disable", 656, function( ent )
-	if ( ent:GetClass() == "gmod_lamp" && ent:GetOn() ) then return true end
+	if ( ent:GetClass() == "gmod_lamp" and ent:GetOn() ) then return true end
 	return false
 end, function( ent, ply )
 	ent:Switch( false )
@@ -435,14 +435,14 @@ end, DisableIcon )
 
 -- Light
 AddEntFunctionProperty( "rb655_light_on", "Enable", 655, function( ent )
-	if ( ent:GetClass() == "gmod_light" && !ent:GetOn() ) then return true end
+	if ( ent:GetClass() == "gmod_light" and !ent:GetOn() ) then return true end
 	return false
 end, function( ent, ply )
 	ent:SetOn( true )
 end, EnableIcon )
 
 AddEntFunctionProperty( "rb655_light_off", "Disable", 656, function( ent )
-	if ( ent:GetClass() == "gmod_light" && ent:GetOn() ) then return true end
+	if ( ent:GetClass() == "gmod_light" and ent:GetOn() ) then return true end
 	return false
 end, function( ent, ply )
 	ent:SetOn( false )
@@ -568,13 +568,13 @@ local function SetRelationships( ent, tab, status )
 end
 
 local function Rbt_ProcessOtherNPC( ent )
-	if ( table.HasValue( friendly, ent:GetClass() ) && !table.HasValue( hostaliziedNPCs, ent ) ) then -- It's a friendly that isn't made hostile
+	if ( table.HasValue( friendly, ent:GetClass() ) and !table.HasValue( hostaliziedNPCs, ent ) ) then -- It's a friendly that isn't made hostile
 		SetRelationships( ent, friendliedNPCs, D_LI )
 		SetRelationships( ent, hostaliziedNPCs, D_HT )
-	elseif ( table.HasValue( hostile, ent:GetClass() ) && !table.HasValue( friendliedNPCs, ent ) ) then -- It's a hostile that isn't made friendly
+	elseif ( table.HasValue( hostile, ent:GetClass() ) and !table.HasValue( friendliedNPCs, ent ) ) then -- It's a hostile that isn't made friendly
 		SetRelationships( ent, friendliedNPCs, D_HT )
 		SetRelationships( ent, hostaliziedNPCs, D_LI )
-	elseif ( table.HasValue( monsters, ent:GetClass() ) && !table.HasValue( friendliedNPCs, ent ) && !table.HasValue( hostaliziedNPCs, ent ) ) then -- It's a monster that isn't made friendly or hostile to the player
+	elseif ( table.HasValue( monsters, ent:GetClass() ) and !table.HasValue( friendliedNPCs, ent ) and !table.HasValue( hostaliziedNPCs, ent ) ) then -- It's a monster that isn't made friendly or hostile to the player
 		SetRelationships( ent, friendliedNPCs, D_HT )
 		SetRelationships( ent, hostaliziedNPCs, D_HT )
 	end
@@ -597,7 +597,7 @@ if ( SERVER ) then
 end
 
 AddEntFunctionProperty( "rb655_make_friendly", "Make Friendly", 652, function( ent )
-	if ( ent:IsNPC() && !table.HasValue( passive, ent:GetClass() ) && NPCsThisWorksOn[ ent:GetClass() ] ) then return true end
+	if ( ent:IsNPC() and !table.HasValue( passive, ent:GetClass() ) and NPCsThisWorksOn[ ent:GetClass() ] ) then return true end
 	return false
 end, function( ent )
 	table.insert( friendliedNPCs, ent )
@@ -620,14 +620,14 @@ end, function( ent )
 	SetRelationships( ent, hostaliziedNPCs, D_HT )
 
 	for id, oent in pairs( ents.GetAll() ) do
-		if ( oent:IsNPC() && oent != ent ) then Rbt_ProcessOtherNPC( oent ) end
+		if ( oent:IsNPC() and oent != ent ) then Rbt_ProcessOtherNPC( oent ) end
 	end
 
 	ent:Activate()
 end, "icon16/user_green.png" )
 
 AddEntFunctionProperty( "rb655_make_hostile", "Make Hostile", 653, function( ent )
-	if ( ent:IsNPC() && !table.HasValue( passive, ent:GetClass() ) && NPCsThisWorksOn[ ent:GetClass() ] ) then return true end
+	if ( ent:IsNPC() and !table.HasValue( passive, ent:GetClass() ) and NPCsThisWorksOn[ ent:GetClass() ] ) then return true end
 	return false
 end, function( ent )
 	table.insert( hostaliziedNPCs, ent )
@@ -650,6 +650,6 @@ end, function( ent )
 	SetRelationships( ent, hostaliziedNPCs, D_LI )
 
 	for id, oent in pairs( ents.GetAll() ) do
-		if ( oent:IsNPC() && oent != ent ) then Rbt_ProcessOtherNPC( oent ) end
+		if ( oent:IsNPC() and oent != ent ) then Rbt_ProcessOtherNPC( oent ) end
 	end
 end, "icon16/user_red.png" )

@@ -10,13 +10,13 @@ function ENT:PhysicsUpdatePatch( physobj )
 
 	local isConstrained = false
 	for _, ent in pairs( self.Constraints ) do
-		if ( IsValid( ent ) && ent:GetClass() != "ent_bonemerged" ) then
+		if ( IsValid( ent ) and ent:GetClass() != "ent_bonemerged" ) then
 			isConstrained = true
 		end
 	end
 
 	-- Don't do anything if the player isn't holding us
-	if ( !self:IsPlayerHolding() && !isConstrained ) then
+	if ( !self:IsPlayerHolding() and !isConstrained ) then
 
 		physobj:SetVelocity( vector_origin )
 		physobj:Sleep()
