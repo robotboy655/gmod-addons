@@ -193,6 +193,6 @@ function TOOL:DrawHUD()
 	if ( !IsValid( ent ) or tobool( self:GetClientNumber( "noglow" ) ) ) then return end
 
 	local t = { ent }
-	if ( ent.GetActiveWeapon ) then table.insert( t, ent:GetActiveWeapon() ) end
+	if ( ent.GetActiveWeapon and IsValid( ent:GetActiveWeapon() ) ) then table.insert( t, ent:GetActiveWeapon() ) end
 	halo.Add( t, HSVToColor( ( CurTime() * 3 ) % 360, math.abs( math.sin( CurTime() / 2 ) ), 1 ), 2, 2, 1 )
 end
