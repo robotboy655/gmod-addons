@@ -320,33 +320,60 @@ AddInfoFunc( {
 
 	end
 } )]]
+
+local hitboxGroupColors = {
+	Color( 255, 128, 128 ),
+	Color( 128, 255, 128 ),
+	Color( 128, 128, 255 ),
+
+	Color( 255, 255, 128 ),
+	Color( 128, 255, 255 ),
+	Color( 255, 128, 255 ),
+
+	Color( 0, 128, 128 ),
+	Color( 128, 128, 0 ),
+	Color( 128, 0, 128 ),
+
+	Color( 128, 128, 128 ),
+}
 AddInfoFunc( {
 	name = "Hit Groups",
 	check = function( ent )
-		if ( !ent:GetHitBoxGroupCount() ) then
+		if ( !ent:GetHitboxSetCount() ) then
 			return "Entity doesn't have any hit groups!"
 		end
 	end,
 	func = function( ent, labels, dirs )
 
 		cam.Start3D( EyePos(), EyeAngles() )
-		for i = 0, ent:GetHitBoxGroupCount() - 1 do
-			for j = 0, ent:GetHitBoxCount( i ) - 1 do
-				local bone = ent:GetHitBoxBone( j, i )
+		for set = 0, ent:GetHitboxSetCount() - 1 do
+			for hitbox = 0, ent:GetHitBoxCount( set ) - 1 do
+				local bone = ent:GetHitBoxBone( hitbox, set )
 				if ( !bone or bone < 0 ) then continue end
 
-				local mins, maxs = ent:GetHitBoxBounds( j, i )
+				local mins, maxs = ent:GetHitBoxBounds( hitbox, set )
 				local scale = 1
 				local pos, ang = ent:GetBonePosition( bone )
+				local group = ent:GetHitBoxHitGroup( hitbox, set )
 
 				if ( ent:GetBoneMatrix( bone ) ) then
 					scale = ent:GetBoneMatrix( bone ):GetScale()
 					ang = ent:GetBoneMatrix( bone ):GetAngles()
+					//pos = ent:GetBoneMatrix( bone ):GetTranslation()
 				end
 
-				mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-				render.SetMaterial( mat_wireframe )
-				render.DrawBox( pos, ang, mins * scale, maxs * scale )
+				local clr = hitboxGroupColors[ group ] or color_white
+				renderDrawBox( pos, ang, mins * scale, maxs * scale, true, clr )
+
+				if ( labels ) then
+					cam.Start2D()
+						local globalPos = LocalToWorld( ( mins + maxs ) / 2 * scale, angle_zero, pos, ang )
+						local p = ( globalPos ):ToScreen()
+						draw.SimpleText( "Set " .. set .. ", Hitbox " .. hitbox .. ", Group: " .. group, "rb655_attachment", p.x, p.y + 20, clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
+		
+						renderBoxDimensions( pos, ang, mins * scale, maxs * scale )
+					cam.End2D()
+				end
 			end
 		end
 		cam.End3D()
