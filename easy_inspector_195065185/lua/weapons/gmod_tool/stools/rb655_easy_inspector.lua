@@ -52,13 +52,13 @@ local function ConvertToUnit( units, speed )
 	return units
 end
 
-local function renderDrawBox( pos, ang, min, max, bWire )
-	mat_wireframe:SetVector( "$color", Vector( 1, 1, 1 ) )
-	render.SetMaterial( mat_wireframe )
+local function renderDrawBox( pos, ang, min, max, bWire, color )
 
 	if ( bWire ) then
-		render.DrawWireframeBox( pos, ang, min, max, Color( 255, 255, 255 ), true )
+		render.DrawWireframeBox( pos, ang, min, max, color or color_white, true )
 	else
+		mat_wireframe:SetVector( "$color", ( color or color_white ):ToVector() )
+		render.SetMaterial( mat_wireframe )
 		render.DrawBox( pos, ang, min, max )
 	end
 
@@ -364,7 +364,7 @@ AddInfoFunc( {
 		if ( ent:IsPlayer() ) then ang.p = 0 end
 
 		cam.Start3D( EyePos(), EyeAngles() )
-			renderDrawBox( pos, ang, mins, maxs )
+			renderDrawBox( pos, ang, mins, maxs, true )
 		cam.End3D()
 
 		if ( !labels ) then return end
@@ -378,7 +378,7 @@ AddInfoFunc( {
 		local mins, maxs = ent:WorldSpaceAABB()
 
 		cam.Start3D( EyePos(), EyeAngles() )
-			renderDrawBox( vector_origin, angle_zero, mins, maxs )
+			renderDrawBox( vector_origin, angle_zero, mins, maxs, true )
 		cam.End3D()
 
 		if ( !labels ) then return end
@@ -394,7 +394,7 @@ AddInfoFunc( {
 		if ( ent:IsPlayer() ) then ang.p = 0 end
 
 		cam.Start3D( EyePos(), EyeAngles() )
-			renderDrawBox( pos, ang, mins, maxs )
+			renderDrawBox( pos, ang, mins, maxs, true )
 		cam.End3D()
 
 		if ( !labels ) then return end
@@ -410,7 +410,7 @@ AddInfoFunc( {
 		if ( ent:IsPlayer() ) then ang.p = 0 end
 
 		cam.Start3D( EyePos(), EyeAngles() )
-			renderDrawBox( pos, ang, mins, maxs )
+			renderDrawBox( pos, ang, mins, maxs, true )
 		cam.End3D()
 
 		if ( !labels ) then return end
@@ -426,7 +426,7 @@ AddInfoFunc( {
 		if ( ent:IsPlayer() ) then ang.p = 0 end
 
 		cam.Start3D( EyePos(), EyeAngles() )
-			renderDrawBox( pos, ang, mins, maxs )
+			renderDrawBox( pos, ang, mins, maxs, true )
 		cam.End3D()
 
 		if ( !labels ) then return end
@@ -442,7 +442,7 @@ AddInfoFunc( {
 		if ( ent:IsPlayer() ) then ang.p = 0 end
 
 		cam.Start3D( EyePos(), EyeAngles() )
-			renderDrawBox( pos, ang, mins, maxs )
+			renderDrawBox( pos, ang, mins, maxs, true )
 		cam.End3D()
 
 		if ( !labels ) then return end
