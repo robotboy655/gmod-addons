@@ -3,8 +3,8 @@ AddCSLuaFile()
 
 ENT.Base = "base_entity"
 ENT.Type = "anim"
-ENT.RenderGroup = RENDERGROUP_BOTH
 
+ENT.WantsTranslucency = true -- For the outline
 ENT.AutomaticFrameAdvance = true
 
 function ENT:SetupDataTables()
@@ -230,19 +230,19 @@ function ENT:DrawBBox()
 
 end
 
-function ENT:Draw()
+function ENT:Draw( flags )
 
 	self:DrawBBox()
 
 	-- This probably shouldn't run every frame..
 	self:SetRenderBounds( self:GetModelBounds() )
 
-	self:DrawModel()
+	self:DrawModel( flags )
 
 end
 
-function ENT:DrawTranslucent()
+function ENT:DrawTranslucent( flags )
 
-	self:Draw()
+	self:Draw( flags )
 
 end
