@@ -65,8 +65,8 @@ properties.Add( "rb655_make_animatable", {
 		end
 		-- prop_animatable:InvalidateBoneCache()
 
-		if CPPI then
-			prop_animatable:CPPISetOwner(ply)
+		if ( CPPI ) then
+			prop_animatable:CPPISetOwner( ply )
 		end
 
 		prop_animatable:Spawn()
