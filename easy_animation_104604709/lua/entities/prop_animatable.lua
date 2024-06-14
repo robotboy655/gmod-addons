@@ -113,7 +113,7 @@ if ( SERVER ) then
 
 end
 
-function ENT:BecomeRagdollLua( force, forcePos, owner )
+function ENT:BecomeRagdollLua( force, forcePos )
 	local ent = self
 
 	local ragdoll = ents.Create( "prop_ragdoll" )
@@ -133,11 +133,6 @@ function ENT:BecomeRagdollLua( force, forcePos, owner )
 	end
 
 	ragdoll:Spawn()
-	
-	if ( CPPI ) then
-		ragdoll:CPPISetOwner( owner )
-	end
-	
 	ragdoll:Activate()
 
 	ragdoll.EntityMods = ent.EntityMods
@@ -165,6 +160,8 @@ function ENT:BecomeRagdollLua( force, forcePos, owner )
 
 	constraint.RemoveAll( ent ) -- Remove all constraints ( this stops ropes from hanging around )
 	ent:Remove()
+
+	return ragdoll
 end
 
 function ENT:Think()
