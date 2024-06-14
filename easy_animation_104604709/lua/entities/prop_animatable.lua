@@ -113,7 +113,7 @@ if ( SERVER ) then
 
 end
 
-function ENT:BecomeRagdollLua( force, forcePos )
+function ENT:BecomeRagdollLua( force, forcePos, owner )
 	local ent = self
 
 	local ragdoll = ents.Create( "prop_ragdoll" )
@@ -133,6 +133,11 @@ function ENT:BecomeRagdollLua( force, forcePos )
 	end
 
 	ragdoll:Spawn()
+	
+	if ( CPPI ) then
+		ragdoll:CPPISetOwner( owner )
+	end
+	
 	ragdoll:Activate()
 
 	ragdoll.EntityMods = ent.EntityMods
