@@ -159,7 +159,7 @@ local ToolModes = {
 		end
 	},
 	{
-		label = "QUCIK LADDER/FLIP",
+		label = "QUICK LADDER/FLIP",
 		desc = "Create ladder at a climbable surface (Alt=Flip ladder direction)",
 		command = "nav_build_ladder",
 		reload = "nav_ladder_flip"
