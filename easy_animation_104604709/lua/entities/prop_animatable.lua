@@ -160,6 +160,8 @@ function ENT:BecomeRagdollLua( force, forcePos )
 
 	constraint.RemoveAll( ent ) -- Remove all constraints ( this stops ropes from hanging around )
 	ent:Remove()
+
+	return ragdoll
 end
 
 function ENT:Think()

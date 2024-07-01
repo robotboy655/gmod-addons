@@ -65,6 +65,10 @@ properties.Add( "rb655_make_animatable", {
 		end
 		-- prop_animatable:InvalidateBoneCache()
 
+		if ( CPPI ) then
+			prop_animatable:CPPISetOwner( ply )
+		end
+
 		prop_animatable:Spawn()
 		prop_animatable:Activate()
 
@@ -106,7 +110,11 @@ properties.Add( "rb655_make_ragdoll", {
 
 		if ( !IsValid( ply ) or !IsValid( ent ) or !self:Filter( ent, ply ) ) then return false end
 
-		ent:BecomeRagdollLua()
+		local ragdoll = ent:BecomeRagdollLua()
+
+		if ( CPPI ) then
+			ragdoll:CPPISetOwner( ply )
+		end
 	end
 } )
 
