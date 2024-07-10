@@ -52,6 +52,12 @@ properties.Add( "rb655_make_animatable", {
 		prop_animatable:SetCycle( ent:GetCycle() )
 		--prop_animatable:SetPlaybackRate( ent:GetPlaybackRate() )
 
+		if ( IsValid( ply ) ) then
+			ply:AddCount( "prop_animatable", prop_animatable )
+			ply:AddCleanup( "prop_animatable", prop_animatable )
+			prop_animatable:SetPlayer( ply )
+		end
+
 		prop_animatable:SetSkin( ent:GetSkin() or 0 )
 		prop_animatable:SetFlexScale( ent:GetFlexScale() )
 		for i = 0, ent:GetFlexNum() - 1 do prop_animatable:SetFlexWeight( i, ent:GetFlexWeight( i ) ) end
@@ -70,8 +76,8 @@ properties.Add( "rb655_make_animatable", {
 
 		prop_animatable.EntityMods = ent.EntityMods
 		prop_animatable.BoneMods = ent.BoneMods
-		duplicator.ApplyEntityModifiers( nil, prop_animatable )
-		duplicator.ApplyBoneModifiers( nil, prop_animatable )
+		duplicator.ApplyEntityModifiers( ply, prop_animatable )
+		duplicator.ApplyBoneModifiers( ply, prop_animatable )
 
 		-- We use string find because there are might be subclasses, like prop_ragdoll_multiplayer or something
 		if ( string.find( entActual:GetClass(), "prop_ragdoll" ) or entActual:IsNPC() ) then

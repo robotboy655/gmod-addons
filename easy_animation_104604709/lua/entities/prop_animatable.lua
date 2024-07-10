@@ -24,6 +24,13 @@ end
 
 if ( SERVER ) then
 
+	function ENT:SetPlayer( ply )
+
+		-- Name compatible with base Sandbox function of the same name
+		self.Founder = ply
+
+	end
+
 	function ENT:Initialize()
 
 		-- This is a silly way to check if the model has a physics mesh or not
@@ -134,6 +141,12 @@ function ENT:BecomeRagdollLua( force, forcePos )
 
 	ragdoll:Spawn()
 	ragdoll:Activate()
+
+	if ( IsValid( self.Founder ) ) then
+		--self.Founder:AddCount( "ragdolls", ragdoll 
+		gamemode.Call( "PlayerSpawnedRagdoll", self.Founder, ragdoll:GetModel(), ragdoll )
+		self.Founder:AddCleanup( "ragdolls", ragdoll )
+	end
 
 	ragdoll.EntityMods = ent.EntityMods
 	ragdoll.BoneMods = ent.BoneMods
