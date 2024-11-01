@@ -81,19 +81,19 @@ if ( SERVER ) then
 	end
 
 	-- Periodically sync server data to clients.
-	local nextSync = 0
-	hook.Add( "Tick", "rb655_propperties_sync", function()
-		if ( CLIENT ) then return end
-
-		if ( nextSync > CurTime() ) then return end
-		nextSync = CurTime() + 1
-
-		for id, ent in pairs( ents.GetAll() ) do -- TODO: Swtich to ents.Iterator at some point!
-			if ( IsValid( ent ) and SyncFuncs[ ent:GetClass() ] ) then
-				SyncFuncs[ ent:GetClass() ]( ent )
+	if ( SERVER ) then
+		local nextSync = 0
+		hook.Add( "Tick", "rb655_propperties_sync", function()
+			if ( nextSync > CurTime() ) then return end
+			nextSync = CurTime() + 1
+	
+			for id, ent in ents.Iterator() do
+				if ( SyncFuncs[ ent:GetClass() ] ) then
+					SyncFuncs[ ent:GetClass() ]( ent )
+				end
 			end
-		end
-	end )
+		end )
+	end
 
 end
 
