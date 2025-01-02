@@ -157,40 +157,13 @@ AddEntFireProperty( "rb655_breakable_break", "Break", 655, function( ent, ply )
 	return rb655_property_filter( { "func_breakable", "func_physbox", "prop_physics", "func_pushable" }, ent, ply )
 end, "Break", ExplodeIcon ) -- Do not include item_item_crate, it insta crashes the server, dunno why.
 
-
-
-local dissolve_id = 0
-local dissolver
-function rb655_dissolve( ent )
-	local phys = ent:GetPhysicsObject()
-	if ( IsValid( phys ) ) then phys:EnableGravity( false ) end
-
-	if ( !IsValid( dissolver ) ) then
-		dissolver = ents.Create( "env_entity_dissolver" )
-		dissolver:SetPos( ent:GetPos() )
-		dissolver:Spawn()
-		dissolver:Activate()
-		dissolver:SetKeyValue( "magnitude", 100 )
-		dissolver:SetKeyValue( "dissolvetype", 0 )
-	end
-
-	ent:SetName( "rb655_dissolve" .. dissolve_id )
-	dissolver:Fire( "Dissolve", "rb655_dissolve" .. dissolve_id )
-	dissolve_id = dissolve_id + 1
-
-	-- Clean it up if it is not being used for 60 seconds
-	timer.Create( "rb655_ep_cleanupDissolver", 60, 1, function()
-		if ( IsValid( dissolver ) ) then dissolver:Remove() end
-	end )
-end
-
 AddEntFunctionProperty( "rb655_dissolve", "Disintegrate", 657, function( ent, ply )
 	if ( ent:GetModel() and ent:GetModel():StartWith( "*" ) ) then return false end
 	if ( ent:IsPlayer() ) then return false end
 
 	return true
 end, function( ent )
-	rb655_dissolve( ent )
+	ent:Dissolve()
 end, "icon16/wand.png" )
 
 
