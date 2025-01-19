@@ -163,7 +163,7 @@ AddEntFunctionProperty( "rb655_dissolve", "Disintegrate", 657, function( ent, pl
 
 	return true
 end, function( ent )
-	ent:Dissolve()
+	ent:Dissolve( 0, 100 )
 end, "icon16/wand.png" )
 
 
