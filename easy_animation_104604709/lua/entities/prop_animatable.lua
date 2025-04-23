@@ -38,7 +38,7 @@ if ( SERVER ) then
 
 		-- We got no physics? Do some fake shit
 		if ( !IsValid( self:GetPhysicsObject() ) ) then
-			local mins, maxs = self:OBBMins(), self:OBBMaxs()
+			local mins, maxs = self:GetModelBounds()
 			self:SetCollisionBounds( mins, maxs )
 			self:SetSolid( SOLID_BBOX )
 		end
@@ -50,7 +50,7 @@ if ( SERVER ) then
 
 	function ENT:FixRagdoll()
 
-		local mins, maxs = self:OBBMins(), self:OBBMaxs()
+		local mins, maxs = self:GetModelBounds()
 
 		-- Just in case
 		self.OriginalCollisions = mins
