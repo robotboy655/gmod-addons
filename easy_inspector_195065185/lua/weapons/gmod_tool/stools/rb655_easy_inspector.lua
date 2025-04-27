@@ -671,7 +671,7 @@ if ( SERVER ) then
 	net.Receive( "rb655_inspector_reqinfo", function( msglen, ply )
 		local ent = net.ReadEntity()
 
-		if ( !IsValid(ent) or !IsValid( ent:GetPhysicsObject() ) ) then return end
+		if ( !IsValid( ent ) or !IsValid( ent:GetPhysicsObject() ) ) then return end
 
 		local data = { data = {}, model = ent:GetModel(), class = ent:GetClass(), entid = ent:EntIndex() }
 		for i = 0, ent:GetPhysicsObjectCount() - 1 do
