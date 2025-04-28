@@ -14,12 +14,21 @@ local function GiveWeapon( ply, ent, args )
 
 	local className = args[ 1 ]
 
-	local swep = list.Get( "Weapon" )[ className ]
+	local swep
+
+	for _, t in ipairs( list.Get( "NPCUsableWeapons" ) ) do
+		if ( t.class == className ) then
+			swep = list.Get( "Weapon" )[ className ]
+			break
+		end
+	end
+
 	if ( swep == nil ) then
 		for id, t in pairs( extraItems ) do
 			if ( t.ClassName == className ) then swep = t end
 		end
 	end
+
 	if ( swep == nil ) then return end
 
 	-- Cannot validate if the player is admin for admin weapons if we got no player object (saves)
@@ -100,8 +109,19 @@ properties.Add( "rb655_npc_weapon", {
 		-- Add the hidden NPC only weapons
 		Categorised[ "Half-Life 2" ] = table.Copy( extraItems )
 
+		local NPCWeapons = list.Get( "NPCUsableWeapons" )
+
 		for k, weapon in pairs( list.Get( "Weapon" ) ) do
-			if ( !weapon.Spawnable and !weapon.AdminSpawnable ) then continue end
+			local NpcUsable
+
+			for _, t in ipairs( NPCWeapons ) do
+				if ( t.class == weapon.ClassName ) then
+					NpcUsable = true
+					break
+				end
+			end
+
+			if ( !NpcUsable or !weapon.Spawnable and !weapon.AdminSpawnable ) then continue end
 
 			local cat = weapon.Category or "Other"
 			if ( !isstring( cat ) ) then cat = tostring( cat ) end
@@ -131,30 +151,6 @@ properties.Add( "rb655_npc_weapon", {
 				PropPanel:Add( icon )
 			end
 		end
-
-		local WarningThing = vgui.Create( "Panel", frame )
-		WarningThing:SetHeight( 70 )
-		WarningThing:Dock( BOTTOM )
-		WarningThing:DockMargin( 0, 5, 0, 0 )
-		function WarningThing:Paint( w, h )
-			draw.RoundedBox( 0, 0, 0, w, h, Color( 255, 0, 0 ) )
-		end
-
-		local WarningText = vgui.Create( "DLabel", WarningThing )
-		WarningText:Dock( TOP )
-		WarningText:SetHeight( 35 )
-		WarningText:SetContentAlignment( 5 )
-		WarningText:SetTextColor( color_white )
-		WarningText:SetFont( "DermaLarge" )
-		WarningText:SetText( "WARNING! Not all NPCs can use weapons and not all weapons are usable by NPCs." )
-
-		local WarningText2 = vgui.Create( "DLabel", WarningThing )
-		WarningText2:Dock( TOP )
-		WarningText2:SetHeight( 35 )
-		WarningText2:SetContentAlignment( 5 )
-		WarningText2:SetTextColor( color_white )
-		WarningText2:SetFont( "DermaLarge" )
-		WarningText2:SetText( "This is entirely dependent on the Addon the weapon and the NPC are from. This mod cannot change that." )
 	end,
 	Receive = function( self, length, ply )
 		local ent = net.ReadEntity()
