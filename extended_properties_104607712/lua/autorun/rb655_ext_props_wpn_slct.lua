@@ -9,6 +9,8 @@ local extraItems = {
 	{ ClassName = "weapon_citizensuitcase", PrintName = "#weapon_citizensuitcase", Category = "Half-Life 2", Author = "VALVe", Spawnable = true }
 }
 
+local allWeapons = CreateConVar("rb655_ext_properties_npcallweapons", "1", FCVAR_ARCHIVE + FCVAR_REPLICATED, "Should allow all weapons for NPCs? (that don't even work)")
+
 local function GiveWeapon( ply, ent, args )
 	if ( !args or !args[ 1 ] or !isstring( args[ 1 ] ) ) then return end
 
@@ -16,10 +18,14 @@ local function GiveWeapon( ply, ent, args )
 
 	local swep
 
-	for _, t in ipairs( list.Get( "NPCUsableWeapons" ) ) do
-		if ( t.class == className ) then
-			swep = list.Get( "Weapon" )[ className ]
-			break
+	if ( allWeapons:GetBool() ) then
+		swep = list.Get( "Weapon" )[ className ]
+	else
+		for _, t in ipairs( list.Get( "NPCUsableWeapons" ) ) do
+			if ( t.class == className ) then
+				swep = list.Get( "Weapon" )[ className ]
+				break
+			end
 		end
 	end
 
@@ -112,12 +118,14 @@ properties.Add( "rb655_npc_weapon", {
 		local NPCWeapons = list.Get( "NPCUsableWeapons" )
 
 		for k, weapon in pairs( list.Get( "Weapon" ) ) do
-			local NpcUsable
+			local NpcUsable = allWeapons:GetBool()
 
-			for _, t in ipairs( NPCWeapons ) do
-				if ( t.class == weapon.ClassName ) then
-					NpcUsable = true
-					break
+			if ( !NpcUsable ) then
+				for _, t in ipairs( NPCWeapons ) do
+					if ( t.class == weapon.ClassName ) then
+						NpcUsable = true
+						break
+					end
 				end
 			end
 
@@ -150,6 +158,32 @@ properties.Add( "rb655_npc_weapon", {
 
 				PropPanel:Add( icon )
 			end
+		end
+
+		if ( allWeapons:GetBool() ) then
+			local WarningThing = vgui.Create( "Panel", frame )
+			WarningThing:SetHeight( 70 )
+			WarningThing:Dock( BOTTOM )
+			WarningThing:DockMargin( 0, 5, 0, 0 )
+			function WarningThing:Paint( w, h )
+				draw.RoundedBox( 0, 0, 0, w, h, Color( 255, 0, 0 ) )
+			end
+	
+			local WarningText = vgui.Create( "DLabel", WarningThing )
+			WarningText:Dock( TOP )
+			WarningText:SetHeight( 35 )
+			WarningText:SetContentAlignment( 5 )
+			WarningText:SetTextColor( color_white )
+			WarningText:SetFont( "DermaLarge" )
+			WarningText:SetText( "WARNING! Not all NPCs can use weapons and not all weapons are usable by NPCs." )
+	
+			local WarningText2 = vgui.Create( "DLabel", WarningThing )
+			WarningText2:Dock( TOP )
+			WarningText2:SetHeight( 35 )
+			WarningText2:SetContentAlignment( 5 )
+			WarningText2:SetTextColor( color_white )
+			WarningText2:SetFont( "DermaLarge" )
+			WarningText2:SetText( "This is entirely dependent on the Addon the weapon and the NPC are from. This mod cannot change that." )
 		end
 	end,
 	Receive = function( self, length, ply )
