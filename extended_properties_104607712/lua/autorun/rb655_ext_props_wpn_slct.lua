@@ -9,7 +9,7 @@ local extraItems = {
 	{ ClassName = "weapon_citizensuitcase", PrintName = "#weapon_citizensuitcase", Category = "Half-Life 2", Author = "VALVe", Spawnable = true }
 }
 
-local allWeapons = CreateConVar("rb655_ext_properties_npcallweapons", "1", FCVAR_ARCHIVE + FCVAR_REPLICATED, "Should allow all weapons for NPCs? (that don't even work)")
+local allWeapons = CreateConVar( "rb655_ext_properties_npcallweapons", "1", FCVAR_ARCHIVE + FCVAR_REPLICATED, "Whether 'Change Weapon' property should list all weapons (even if they are not compatible with NPCs), or only those specifically marked as compatible with NPCs." )
 
 local function GiveWeapon( ply, ent, args )
 	if ( !args or !args[ 1 ] or !isstring( args[ 1 ] ) ) then return end
@@ -129,7 +129,7 @@ properties.Add( "rb655_npc_weapon", {
 				end
 			end
 
-			if ( !NpcUsable or !weapon.Spawnable and !weapon.AdminSpawnable ) then continue end
+			if ( !NpcUsable or ( !weapon.Spawnable and !weapon.AdminSpawnable ) ) then continue end
 
 			local cat = weapon.Category or "Other"
 			if ( !isstring( cat ) ) then cat = tostring( cat ) end
