@@ -12,7 +12,7 @@ local extraItems = {
 local allWeapons = CreateConVar( "rb655_ext_properties_npcallweapons", "1", FCVAR_ARCHIVE + FCVAR_REPLICATED, "Whether 'Change Weapon' property should list all weapons (even if they are not compatible with NPCs), or only those specifically marked as compatible with NPCs." )
 
 local function GiveWeapon( ply, ent, args )
-	if ( !args or !args[ 1 ] or !isstring( args[ 1 ] ) ) then return end
+	if ( !ent:IsNPC() or !args or !args[ 1 ] or !isstring( args[ 1 ] ) ) then return end
 
 	local className = args[ 1 ]
 
