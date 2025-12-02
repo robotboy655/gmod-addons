@@ -544,7 +544,7 @@ AddInfoFunc( {
 	func = function( ent, labels, dirs )
 
 		local com_pos = ent.InspectorMassCenter or Vector( 0, 0, 0 )
-		local textpos = ent:GetPos() + com_pos
+		local textpos = ent:LocalToWorld( com_pos )
 
 		cam.Start3D( EyePos(), EyeAngles() )
 			local mul = 10
