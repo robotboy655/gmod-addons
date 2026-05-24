@@ -244,8 +244,11 @@ function ENT:DrawBBox()
 end
 
 function ENT:Draw( flags )
+	local isDepthPass = ( bit.band( flags, STUDIO_SSAODEPTHTEXTURE ) != 0 || bit.band( flags, STUDIO_SHADOWDEPTHTEXTURE ) != 0 )
 
-	self:DrawBBox()
+	if ( !isDepthPass ) then
+		self:DrawBBox()
+	end
 
 	-- This probably shouldn't run every frame..
 	self:SetRenderBounds( self:GetModelBounds() )
