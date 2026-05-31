@@ -245,8 +245,6 @@ end
 
 function ENT:Draw( flags )
 
-	self:DrawBBox()
-
 	-- This probably shouldn't run every frame..
 	self:SetRenderBounds( self:GetModelBounds() )
 
@@ -255,6 +253,8 @@ function ENT:Draw( flags )
 end
 
 function ENT:DrawTranslucent( flags )
+
+	self:DrawBBox()
 
 	self:Draw( flags )
 
