@@ -143,7 +143,7 @@ function ENT:BecomeRagdollLua( force, forcePos )
 	ragdoll:Activate()
 
 	if ( IsValid( self.Founder ) ) then
-		--self.Founder:AddCount( "ragdolls", ragdoll 
+		--self.Founder:AddCount( "ragdolls", ragdoll
 		gamemode.Call( "PlayerSpawnedRagdoll", self.Founder, ragdoll:GetModel(), ragdoll )
 		self.Founder:AddCleanup( "ragdolls", ragdoll )
 	end

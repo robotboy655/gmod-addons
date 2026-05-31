@@ -370,7 +370,7 @@ AddInfoFunc( {
 						local globalPos = LocalToWorld( ( mins + maxs ) / 2 * scale, angle_zero, pos, ang )
 						local p = ( globalPos ):ToScreen()
 						draw.SimpleText( "Set " .. set .. ", Hitbox " .. hitbox .. ", Group: " .. group, "rb655_attachment", p.x, p.y + 20, clr, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER )
-		
+
 						renderBoxDimensions( pos, ang, mins * scale, maxs * scale )
 					cam.End2D()
 				end
@@ -900,7 +900,7 @@ local function TextField( panel, func, tooltip, noent, placeholder )
 	end
 
 	local icon = vgui.Create( "DImageButton", text )
-	icon:SetIcon( "icon16/page.png" )
+	icon:SetImage( "icon16/page.png" )
 	icon:SetTooltip( "Copy to clipboard" )
 	icon:SetSize( 16, 16 )
 	function icon:DoClick()

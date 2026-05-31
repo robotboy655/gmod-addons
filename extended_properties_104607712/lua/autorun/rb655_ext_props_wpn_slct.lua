@@ -168,7 +168,7 @@ properties.Add( "rb655_npc_weapon", {
 			function WarningThing:Paint( w, h )
 				draw.RoundedBox( 0, 0, 0, w, h, Color( 255, 0, 0 ) )
 			end
-	
+
 			local WarningText = vgui.Create( "DLabel", WarningThing )
 			WarningText:Dock( TOP )
 			WarningText:SetHeight( 35 )
@@ -176,7 +176,7 @@ properties.Add( "rb655_npc_weapon", {
 			WarningText:SetTextColor( color_white )
 			WarningText:SetFont( "DermaLarge" )
 			WarningText:SetText( "WARNING! Not all NPCs can use weapons and not all weapons are usable by NPCs." )
-	
+
 			local WarningText2 = vgui.Create( "DLabel", WarningThing )
 			WarningText2:Dock( TOP )
 			WarningText2:SetHeight( 35 )
