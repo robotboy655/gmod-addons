@@ -319,6 +319,7 @@ spawnmenu.AddContentType( "material", function( container, obj )
 		icon:SetMaterial( obj.spawnname )
 	else
 		icon.Image:SetImage( obj.spawnname )
+		icon.m_MaterialName = obj.spawnname
 	end
 
 	icon.DoClick = function()
