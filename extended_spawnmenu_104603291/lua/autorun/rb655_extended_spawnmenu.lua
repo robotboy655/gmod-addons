@@ -200,6 +200,7 @@ hook.Add( "PopulateContent", "SpawnmenuLoadSomeSounds", function( pnlContent, tr
 	end
 
 	local ViewPanel = vgui.Create( "ContentContainer", pnlContent )
+	ViewPanel:SetTriggerSpawnlistChange( false )
 	ViewPanel:SetVisible( false )
 
 	local browseSounds = tree:AddNode( "#spawnmenu.category.browsesounds", "icon16/sound.png" )
@@ -460,6 +461,7 @@ hook.Add( "PopulateContent", "SpawnmenuLoadSomeMaterials", function( pnlContent,
 	end
 
 	local ViewPanel = vgui.Create( "ContentContainer", pnlContent )
+	ViewPanel:SetTriggerSpawnlistChange( false )
 	ViewPanel:SetVisible( false )
 
 	local browseMaterials = tree:AddNode( "#spawnmenu.category.browsematerials", "icon16/picture_empty.png" )
@@ -546,6 +548,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_entities", function( pnlC
 	local node_w = tree:AddNode( "#spawnmenu.category.entities", "icon16/bricks.png" )
 
 	node_w.PropPanel = vgui.Create( "ContentContainer", pnlContent )
+	node_w.PropPanel:SetTriggerSpawnlistChange( false )
 	node_w.PropPanel:SetVisible( false )
 
 	function node_w:DoClick()
@@ -568,6 +571,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_entities", function( pnlC
 		local node_new = node_w:AddNode( CategoryName, "icon16/bricks.png" )
 
 		local CatPropPanel = vgui.Create( "ContentContainer", pnlContent )
+		CatPropPanel:SetTriggerSpawnlistChange( false )
 		CatPropPanel:SetVisible( false )
 
 		local Header = vgui.Create("ContentHeader", node_w.PropPanel )
@@ -598,6 +602,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_post_processing", functio
 	local node_w = tree:AddNode( "#spawnmenu.category.postprocess", "icon16/picture.png" )
 
 	node_w.PropPanel = vgui.Create( "ContentContainer", pnlContent )
+	node_w.PropPanel:SetTriggerSpawnlistChange( false )
 	node_w.PropPanel:SetVisible( false )
 
 	function node_w:DoClick()
@@ -624,6 +629,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_post_processing", functio
 		local node_new = node_w:AddNode( CategoryName, "icon16/picture.png" )
 
 		local CatPropPanel = vgui.Create( "ContentContainer", pnlContent )
+		CatPropPanel:SetTriggerSpawnlistChange( false )
 		CatPropPanel:SetVisible( false )
 
 		local Header = vgui.Create( "ContentHeader", node_w.PropPanel )
@@ -655,6 +661,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_npcs", function( pnlConte
 	local node_w = tree:AddNode( "#spawnmenu.category.npcs", "icon16/monkey.png" )
 
 	node_w.PropPanel = vgui.Create( "ContentContainer", pnlContent )
+	node_w.PropPanel:SetTriggerSpawnlistChange( false )
 	node_w.PropPanel:SetVisible( false )
 
 	function node_w:DoClick()
@@ -678,6 +685,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_npcs", function( pnlConte
 		local node_new = node_w:AddNode( CategoryName, "icon16/monkey.png" )
 
 		local CatPropPanel = vgui.Create( "ContentContainer", pnlContent )
+		CatPropPanel:SetTriggerSpawnlistChange( false )
 		CatPropPanel:SetVisible( false )
 
 		local Header = vgui.Create("ContentHeader", node_w.PropPanel )
@@ -709,6 +717,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_vehicles", function( pnlC
 	local node_w = tree:AddNode( "#spawnmenu.category.vehicles", "icon16/car.png" )
 
 	node_w.PropPanel = vgui.Create( "ContentContainer", pnlContent )
+	node_w.PropPanel:SetTriggerSpawnlistChange( false )
 	node_w.PropPanel:SetVisible( false )
 
 	function node_w:DoClick()
@@ -733,6 +742,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_vehicles", function( pnlC
 		local node_new = node_w:AddNode( CategoryName, "icon16/car.png" )
 
 		local CatPropPanel = vgui.Create( "ContentContainer", pnlContent )
+		CatPropPanel:SetTriggerSpawnlistChange( false )
 		CatPropPanel:SetVisible( false )
 
 		local Header = vgui.Create("ContentHeader", node_w.PropPanel )
@@ -764,6 +774,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_weapons", function( pnlCo
 	local node_w = tree:AddNode( "#spawnmenu.category.weapons", "icon16/gun.png" )
 
 	node_w.PropPanel = vgui.Create( "ContentContainer", pnlContent )
+	node_w.PropPanel:SetTriggerSpawnlistChange( false )
 	node_w.PropPanel:SetVisible( false )
 
 	function node_w:DoClick()
@@ -784,6 +795,7 @@ hook.Add( "PopulateContent", "rb655_extended_spawnmenu_weapons", function( pnlCo
 		local node_new = node_w:AddNode( CategoryName, "icon16/gun.png" )
 
 		local CatPropPanel = vgui.Create( "ContentContainer", pnlContent )
+		CatPropPanel:SetTriggerSpawnlistChange( false )
 		CatPropPanel:SetVisible( false )
 
 		local Header = vgui.Create("ContentHeader", node_w.PropPanel )

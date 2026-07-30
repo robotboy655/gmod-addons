@@ -43,6 +43,7 @@ hook.Add( "PopulateContent", "LegacyAddonProps", function( pnlContent, tree, nod
 	end
 
 	local ViewPanel = vgui.Create( "ContentContainer", pnlContent )
+	ViewPanel:SetTriggerSpawnlistChange( false )
 	ViewPanel:SetVisible( false )
 
 	local addons = {}
