@@ -80,17 +80,47 @@ if ( SERVER ) then
 		ent:SetNWBool( "HasDriver", IsValid( driver ) )]]
 	end
 
-	-- Periodically sync server data to clients.
-	local nextSync = 0
-	hook.Add( "Tick", "rb655_propperties_sync", function()
-		if ( nextSync > CurTime() ) then return end
-		nextSync = CurTime() + 1
+	-- Update only entities with mutable properties.
+	local entsCache = {}
 
+	hook.Add( "InitPostEntity", "rb655_propperties_sync/init", function()
 		for id, ent in ents.Iterator() do
-			if ( SyncFuncs[ ent:GetClass() ] ) then
-				SyncFuncs[ ent:GetClass() ]( ent )
+			local syncFunc = SyncFuncs[ ent:GetClass() ]
+			
+			if ( syncFunc ) then
+				entsCache[ ent ] = syncFunc
+				syncFunc( ent )
 			end
 		end
+	end )
+
+	hook.Add( "OnEntityCreated", "rb655_propperties_sync/entity_created", function( ent )
+		local syncFunc = SyncFuncs[ ent:GetClass() ]
+		
+		if ( syncFunc ) then
+			entsCache[ ent ] = syncFunc
+			syncFunc( ent )
+		end
+	end )
+
+	hook.Add( "EntityRemoved", "rb655_propperties_sync/entity_removed", function( ent, fullUpdate )
+		if ( fullUpdate ) then return end
+		entsCache[ ent ] = nil
+	end )
+
+	-- Periodically sync server data to clients.
+	local nextSync = 0
+	local tickrate = math.floor( 1 / FrameTime() + 0.5 )
+	hook.Add( "Tick", "rb655_propperties_sync", function()
+		
+		nextSync = nextSync - 1
+		if ( nextSync > 0 ) then return end
+		nextSync = tickrate
+
+		for ent, func in pairs( entsCache ) do
+			func( ent )
+		end
+
 	end )
 
 end
